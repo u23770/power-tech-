@@ -1,0 +1,29 @@
+name: Expand archived Power Tech source
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'source.part00'
+permissions:
+  contents: write
+jobs:
+  expand:
+    if: "!contains(github.event.head_commit.message, '[expanded]')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: true
+      - name: Expand source files into repository root
+        run: |
+          set -euo pipefail
+          cat source.part* | base64 --decode | tar -xz --strip-components=1 -C .
+          rm -f source.part*
+      - name: Commit expanded project source
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Expand Power Tech source files [expanded]"
+          git push
