@@ -1,6 +1,6 @@
 // admin/js/app.js — admin bootstrap: auth gate, role-aware navigation, routing, alerts.
 // Role checks here decide what is SHOWN. Every write is re-checked by RLS and trusted functions.
-import { isConfigured, supabase } from '/shared/supabase.js';
+import { isConfigured, adminSupabase } from '/shared/supabase.js';
 import { t, getLang, setLang, onLangChange, applyI18n } from '/shared/i18n.js';
 import { el, clear, brandMark, errorMessage, setStatus, setBusy, confirmAction } from '/shared/ui.js';
 import * as api from './api.js';
@@ -47,12 +47,23 @@ async function boot() {
     return;
   }
 
-  supabase.auth.onAuthStateChange(async (event) => {
+  try {
+    const gate = await fetch('/api/admin-access', { credentials: 'same-origin', cache: 'no-store' });
+    if (!gate.ok) {
+      window.location.replace('/admin/access.html');
+      return;
+    }
+  } catch {
+    renderGate('Could not verify the access code session. Check your connection and try again.');
+    return;
+  }
+
+  adminSupabase.auth.onAuthStateChange(async (event) => {
     if (event === 'SIGNED_OUT') {
       stopPolling();
       state.user = null;
       state.role = null;
-      await renderGate(t('admin.session_expired'));
+      window.location.replace('/admin/access.html');
     }
   });
 
@@ -63,14 +74,35 @@ async function boot() {
 
 async function refreshSession() {
   try {
-    const { data } = await supabase.auth.getSession();
-    if (!data.session) return renderGate();
-    state.user = data.session.user;
-    state.role = await api.getStaffRole(state.user.id);
-    if (!state.role) {
-      await api.signOutStaff().catch(() => {});
-      return renderGate(t('admin.not_staff'));
+    const { data: current } = await adminSupabase.auth.getSession();
+    let session = current.session;
+    if (!session) {
+      const { data, error } = await adminSupabase.auth.signInAnonymously();
+      if (error) throw error;
+      session = data.session;
     }
+    if (!session?.access_token) throw new Error('admin_session_unavailable');
+
+    const provision = await fetch('/api/admin-session', {
+      method: 'POST',
+      credentials: 'same-origin',
+      cache: 'no-store',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: '{}',
+    });
+    if (!provision.ok) {
+      await adminSupabase.auth.signOut().catch(() => {});
+      throw new Error(provision.status === 503
+        ? 'Admin session is not configured. Contact the site owner.'
+        : 'Could not authorize this admin session. Please enter the access code again.');
+    }
+
+    state.user = session.user;
+    state.role = await api.getStaffRole(state.user.id);
+    if (!state.role) throw new Error('admin_role_unavailable');
     showShell();
   } catch (err) {
     renderGate(errorMessage(err));
@@ -84,6 +116,7 @@ function wireHeader() {
     if (state.dirty && !(await confirmAction(t('admin.unsaved')))) return;
     try {
       await api.signOutStaff();
+      window.location.replace('/admin/access.html');
     } catch (err) {
       setStatus(alertBar, errorMessage(err), 'error');
     }
@@ -98,7 +131,7 @@ function renderHeader() {
   langBtn.setAttribute('lang', next);
   langBtn.setAttribute('aria-label', next === 'ar' ? 'التبديل إلى العربية' : 'Switch to English');
   const who = document.getElementById('admin-who');
-  who.textContent = state.user && state.role ? `${state.user.email} · ${t('admin.role', { r: state.role })}` : '';
+  who.textContent = state.user && state.role ? `POWER TECH · ${t('admin.role', { r: state.role })}` : '';
   document.getElementById('admin-signout').hidden = !state.user;
   applyI18n(document);
 }
@@ -170,40 +203,16 @@ async function renderRoute() {
   }
 }
 
-/** Login screen: shown when there is no session or the account has no staff role. */
+/** Show a recovery message; authentication itself is the access-code gate. */
 async function renderGate(message) {
   nav.hidden = true;
   renderHeader();
   clear(main);
-  if (!isConfigured) return;
-  const status = el('div', { className: 'status', attrs: { role: 'alert', hidden: message ? null : true }, dataset: { kind: 'error' } }, message || '');
-  const form = el('form', { className: 'card form login-card', attrs: { novalidate: true, 'aria-labelledby': 'login-h' } },
-    el('h1', { className: 'card-title', attrs: { id: 'login-h' } }, t('admin.sign_in')),
-    el('div', { className: 'field' },
-      el('label', { attrs: { for: 'admin-email' } }, t('account.email')),
-      el('input', { className: 'input', attrs: { id: 'admin-email', name: 'email', type: 'email', autocomplete: 'username', required: 'required', maxlength: '254' } })),
-    el('div', { className: 'field' },
-      el('label', { attrs: { for: 'admin-password' } }, t('account.password')),
-      el('input', { className: 'input', attrs: { id: 'admin-password', name: 'password', type: 'password', autocomplete: 'current-password', required: 'required', maxlength: '72' } })),
-    el('button', { className: 'btn btn-dark', attrs: { type: 'submit' } }, t('admin.sign_in')),
-    status);
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const btn = form.querySelector('button[type="submit"]');
-    setBusy(btn, true);
-    status.hidden = true;
-    try {
-      await api.signInStaff(form.email.value.trim(), form.password.value);
-      form.password.value = '';
-      await refreshSession();
-    } catch (err) {
-      status.textContent = errorMessage(err);
-      status.hidden = false;
-    } finally {
-      setBusy(btn, false);
-    }
-  });
-  main.append(form);
+  const card = el('section', { className: 'card form login-card' },
+    el('h1', { className: 'card-title' }, 'Admin access'),
+    el('p', { className: 'muted', attrs: { role: 'alert' } }, message || 'Please enter the access code to continue.'),
+    el('a', { className: 'btn btn-dark', attrs: { href: '/admin/access.html' } }, 'Return to access code'));
+  main.append(card);
   applyI18n(main);
 }
 
