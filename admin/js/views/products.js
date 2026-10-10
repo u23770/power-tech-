@@ -4,6 +4,7 @@ import { el, clear, setStatus, setBusy, errorMessage, confirmAction } from '/sha
 import { formatMoney } from '/shared/format.js';
 import { PATTERNS, parseSpecs, specsToText, slugify } from '/shared/validators.js';
 import * as api from '../api.js';
+import { serializeCsvRows, prepareProductImport } from '../csv.js';
 
 const MONEY = /^\d{1,10}(\.\d{1,2})?$/;
 const STATUSES = ['draft', 'published', 'unavailable', 'archived'];
@@ -45,12 +46,14 @@ async function renderList(main, ctx) {
     el('div', { className: 'page-title' },
       el('h1', { className: 'card-title' }, t('admin.nav.products')),
       ctx.can('staff') ? el('a', { className: 'btn btn-gold', attrs: { href: '#/products/new' } }, t('admin.new_product')) : null),
+    ctx.can('manager') ? createCsvTools(ctx) : null,
     form, host);
 
   const { rows, count } = await api.listProductsAdmin({ q, status, page, pageSize });
   clear(host);
   if (!rows.length) {
     host.append(el('p', { className: 'muted' }, t('admin.no_results')));
+    applyI18n(main);
     return;
   }
   const thead = el('thead', {}, el('tr', {},
@@ -77,6 +80,202 @@ async function renderList(main, ctx) {
     }));
   applyI18n(host);
 }
+
+
+function createCsvTools(ctx) {
+  const section = el('section', { className: 'card form', attrs: { 'aria-labelledby': 'csv-tools-title' } });
+  const file = el('input', { className: 'input', attrs: {
+    id: 'products-csv-file', name: 'file', type: 'file', accept: '.csv,text/csv',
+    'aria-label': t('admin.csv.file'),
+  } });
+  const note = el('p', { className: 'muted' }, t('admin.csv.intro'));
+  const status = el('div', { className: 'status', attrs: { role: 'status', 'aria-live': 'polite', hidden: true } });
+  const preview = el('div', { className: 'stack' });
+  const validateBtn = el('button', { className: 'btn btn-dark', attrs: { type: 'button' } }, t('admin.csv.validate'));
+  const importBtn = el('button', { className: 'btn btn-gold', attrs: { type: 'button', disabled: 'disabled' } }, t('admin.csv.import'));
+  const exportBtn = el('button', { className: 'btn btn-ghost', attrs: { type: 'button' } }, t('admin.csv.export'));
+  const templateLink = el('a', { className: 'btn btn-ghost', attrs: { href: '/data/products-template.csv', download: 'products-template.csv' } }, t('admin.csv.template'));
+  section.append(
+    el('h2', { className: 'card-title', attrs: { id: 'csv-tools-title' } }, t('admin.csv.title')),
+    note,
+    el('div', { className: 'field' }, el('label', { attrs: { for: 'products-csv-file' } }, t('admin.csv.file')), file),
+    el('div', { className: 'row' }, templateLink, exportBtn, validateBtn, importBtn),
+    status, preview
+  );
+
+  let prepared = null;
+  file.addEventListener('change', () => {
+    prepared = null;
+    importBtn.disabled = true;
+    clear(preview);
+    setStatus(status, '', 'info');
+  });
+
+  validateBtn.addEventListener('click', async () => {
+    const selected = file.files?.[0];
+    prepared = null;
+    importBtn.disabled = true;
+    clear(preview);
+    if (!selected) return setStatus(status, t('admin.csv.no_file'), 'error');
+    if (selected.size > 5 * 1024 * 1024) return setStatus(status, t('admin.csv.file_too_large'), 'error');
+
+    setBusy(validateBtn, true, t('state.loading'));
+    try {
+      const [csvText, existingProducts, categories, brands] = await Promise.all([
+        selected.text(),
+        api.listProductsForCsvAdmin(),
+        api.listCategoriesAdmin(),
+        api.listBrandsAdmin(),
+      ]);
+      const result = prepareProductImport(csvText, { existingProducts, categories, brands });
+      prepared = result;
+      if (result.errors.length) {
+        const visible = result.errors.slice(0, 20);
+        const errorList = el('ul', { className: 'item-list' }, ...visible.map((error) =>
+          el('li', {}, t('admin.csv.line_error', { line: error.line, message: t(`admin.csv.error.${error.code}`) }))
+        ));
+        preview.append(
+          el('div', { className: 'status', attrs: { role: 'alert' }, dataset: { kind: 'error' } },
+            t('admin.csv.validation_failed', { count: result.errors.length })),
+          errorList
+        );
+        if (result.errors.length > visible.length) {
+          preview.append(el('p', { className: 'muted' }, t('admin.csv.more_errors', { count: result.errors.length - visible.length })));
+        }
+        setStatus(status, t('admin.csv.fix_errors'), 'error');
+      } else if (!result.items.length) {
+        setStatus(status, t('admin.csv.no_importable_rows'), 'error');
+      } else {
+        importBtn.disabled = false;
+        setStatus(status, t('admin.csv.preview_ready', {
+          count: result.items.length, skipped: result.skipped,
+        }), 'success');
+        preview.append(el('p', { className: 'muted' }, t('admin.csv.import_add_only')));
+      }
+    } catch (err) {
+      prepared = null;
+      setStatus(status, t(err?.message === 'invalid_csv_quote' || err?.message === 'invalid_csv_quotes'
+        ? 'admin.csv.invalid_format' : 'err.unknown'), 'error');
+    } finally {
+      setBusy(validateBtn, false);
+    }
+  });
+
+  exportBtn.addEventListener('click', async () => {
+    setBusy(exportBtn, true, t('state.loading'));
+    try {
+      const [products, categories, brands] = await Promise.all([
+        api.listProductsForCsvAdmin(), api.listCategoriesAdmin(), api.listBrandsAdmin(),
+      ]);
+      const categoryById = new Map(categories.map((row) => [row.id, row.slug]));
+      const brandById = new Map(brands.map((row) => [row.id, row.name]));
+      const headers = [
+        'is_example', 'sku', 'slug', 'title_en', 'title_ar', 'brand', 'category_slug',
+        'condition', 'track_mode', 'price', 'sale_price', 'currency', 'status',
+        'model_number', 'warranty_text_en', 'warranty_text_ar', 'description_en',
+        'description_ar', 'specs', 'quantity', 'is_featured', 'low_stock_threshold',
+      ];
+      const output = [headers];
+      for (const product of products) {
+        const inventory = Array.isArray(product.inventory) ? product.inventory[0] : product.inventory;
+        const specs = Object.entries(product.specs || {}).map(([key, value]) => `${key}: ${value}`).join('; ');
+        output.push([
+          'no', product.sku || '', product.slug, product.title_en, product.title_ar || '',
+          brandById.get(product.brand_id) || '', categoryById.get(product.category_id) || '',
+          product.condition, product.track_mode, product.price, product.sale_price ?? '',
+          String(product.currency || 'EGP').trim(), product.status, product.model_number || '',
+          product.warranty_text_en || '', product.warranty_text_ar || '',
+          product.description_en || '', product.description_ar || '', specs,
+          inventory?.quantity_on_hand ?? 0, product.is_featured ? 'yes' : 'no',
+          inventory?.low_stock_threshold ?? 0,
+        ]);
+      }
+      const blob = new Blob([serializeCsvRows(output)], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = el('a', { attrs: { href: url, download: `power-tech-products-${new Date().toISOString().slice(0, 10)}.csv` } });
+      document.body.append(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      setStatus(status, t('admin.csv.export_done', { count: products.length }), 'success');
+    } catch (err) {
+      setStatus(status, errorMessage(err), 'error');
+    } finally {
+      setBusy(exportBtn, false);
+    }
+  });
+
+  importBtn.addEventListener('click', async () => {
+    if (!prepared?.items?.length || prepared.errors.length) return;
+    if (!(await confirmAction(t('admin.csv.confirm_import', { count: prepared.items.length })))) return;
+    const items = prepared.items;
+    prepared = null;
+    importBtn.disabled = true;
+    setBusy(importBtn, true, t('admin.csv.importing'));
+    let created = 0;
+    let failed = 0;
+    let stockWarnings = 0;
+    const failures = [];
+    try {
+      for (const item of items) {
+        let id;
+        try {
+          id = await api.insertProduct(item.product);
+          created += 1;
+        } catch (err) {
+          failed += 1;
+          if (failures.length < 5) failures.push(t('admin.csv.row_failed', {
+            line: item.line, message: errorMessage(err),
+          }));
+          continue;
+        }
+        if (item.quantity > 0) {
+          try {
+            await api.adjustStock(id, item.quantity, 'CSV import');
+          } catch (err) {
+            stockWarnings += 1;
+            if (failures.length < 5) failures.push(t('admin.csv.stock_failed', {
+              line: item.line, message: errorMessage(err),
+            }));
+          }
+        }
+        if (item.lowStockThreshold > 0) {
+          try {
+            await api.setLowStockThreshold(id, item.lowStockThreshold);
+          } catch (err) {
+            stockWarnings += 1;
+            if (failures.length < 5) failures.push(t('admin.csv.threshold_failed', {
+              line: item.line, message: errorMessage(err),
+            }));
+          }
+        }
+      }
+      const message = t('admin.csv.import_result', { created, failed, stockWarnings });
+      try { sessionStorage.setItem('pt_admin_csv_flash', message); } catch {}
+      if (failures.length) {
+        setStatus(status, message, failed || stockWarnings ? 'error' : 'success');
+        preview.replaceChildren(el('ul', { className: 'item-list' }, ...failures.map((failure) => el('li', {}, failure))));
+      } else {
+        setStatus(status, message, failed || stockWarnings ? 'error' : 'success');
+      }
+      ctx.refresh();
+    } finally {
+      setBusy(importBtn, false);
+      importBtn.disabled = true;
+    }
+  });
+
+  try {
+    const flash = sessionStorage.getItem('pt_admin_csv_flash');
+    if (flash) {
+      sessionStorage.removeItem('pt_admin_csv_flash');
+      setStatus(status, flash, 'success');
+    }
+  } catch {}
+  applyI18n(section);
+  return section;
+}
+
 
 function pager(total, page, pageSize, go) {
   const last = Math.max(0, Math.ceil(total / pageSize) - 1);
