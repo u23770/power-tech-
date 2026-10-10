@@ -25,7 +25,7 @@ export const supabase = supabaseClientFactory
 // is the gate, so an admin JWT must not survive a reload or be refreshed indefinitely.
 export const adminSupabase = supabaseClientFactory
   ? supabaseClientFactory(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY, {
-      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+      auth: { persistSession: false, autoRefreshToken: true, detectSessionInUrl: false },
     })
   : null;
 
