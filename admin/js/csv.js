@@ -63,6 +63,158 @@ export function serializeCsvRows(rows) {
   return '\uFEFF' + rows.map((row) => row.map(cell).join(',')).join('\r\n');
 }
 
+
+const MAX_IMPORT_BYTES = 5 * 1024 * 1024;
+
+// Common English and Arabic spreadsheet column headings mapped to the store's import fields.
+function normalizeHeaderToken(value) {
+  return String(value ?? '')
+    .normalize('NFKC')
+    .toLowerCase()
+    .replace(/[\\u064B-\\u065F\\u0670]/g, '')
+    .replace(/[أإآ]/g, 'ا')
+    .replace(/ى/g, 'ي')
+    .replace(/[_\\-./]+/g, ' ')
+    .replace(/[^\\p{L}\\p{N} ]/gu, ' ')
+    .replace(/\\s+/g, ' ')
+    .trim();
+}
+
+const HEADER_ALIASES = new Map();
+function addHeaderAliases(field, values) {
+  for (const value of [field, ...values]) HEADER_ALIASES.set(normalizeHeaderToken(value), field);
+}
+addHeaderAliases('title_en', ['english title', 'product name en', 'name en', 'اسم المنتج الانجليزي', 'اسم المنتج بالانجليزي', 'العنوان الانجليزي']);
+addHeaderAliases('title_ar', ['arabic title', 'product name ar', 'name ar', 'اسم المنتج العربي', 'اسم المنتج بالعربي', 'اسم المنتج بالعربية', 'العنوان العربي']);
+addHeaderAliases('description_en', ['description', 'product description', 'english description', 'الوصف الانجليزي', 'وصف المنتج بالانجليزي']);
+addHeaderAliases('description_ar', ['arabic description', 'الوصف العربي', 'وصف المنتج بالعربي']);
+addHeaderAliases('price', ['regular price', 'base price', 'unit price', 'السعر', 'السعر الاساسي', 'سعر البيع', 'الثمن']);
+addHeaderAliases('sale_price', ['sale price', 'discount price', 'discounted price', 'special price', 'سعر الخصم', 'السعر بعد الخصم', 'سعر بعد الخصم']);
+addHeaderAliases('sku', ['product code', 'item code', 'code', 'barcode', 'باركود', 'الباركود', 'كود المنتج', 'رمز المنتج']);
+addHeaderAliases('slug', ['product url', 'url slug', 'الرابط المختصر']);
+addHeaderAliases('brand', ['manufacturer', 'make', 'العلامة التجارية', 'الماركة', 'الشركة المصنعة']);
+addHeaderAliases('category_slug', ['category', 'category name', 'product category', 'type', 'التصنيف', 'الفئة', 'القسم', 'نوع المنتج']);
+addHeaderAliases('quantity', ['qty', 'stock', 'stock quantity', 'inventory', 'on hand', 'quantity on hand', 'الكمية', 'المخزون', 'الرصيد', 'عدد القطع']);
+addHeaderAliases('low_stock_threshold', ['low stock threshold', 'reorder level', 'حد المخزون المنخفض', 'حد التنبيه للمخزون']);
+addHeaderAliases('model_number', ['model', 'model no', 'model code', 'رقم الموديل', 'الموديل']);
+addHeaderAliases('condition', ['product condition', 'حالة المنتج', 'الحالة']);
+addHeaderAliases('track_mode', ['inventory type', 'stock tracking', 'طريقة تتبع المخزون']);
+addHeaderAliases('currency', ['العملة']);
+addHeaderAliases('status', ['product status', 'حالة النشر', 'حالة العرض']);
+addHeaderAliases('warranty_text_en', ['warranty', 'warranty en', 'english warranty', 'الضمان']);
+addHeaderAliases('warranty_text_ar', ['arabic warranty', 'الضمان بالعربي', 'الضمان بالعربية']);
+addHeaderAliases('is_featured', ['featured', 'show on homepage', 'مميز', 'عرض في الرئيسية']);
+addHeaderAliases('specs', ['specifications', 'technical specs', 'المواصفات', 'المواصفات الفنية']);
+addHeaderAliases('is_example', ['example row', 'sample row', 'صف مثال']);
+const GENERIC_TITLE_HEADERS = new Set([
+  'name', 'product name', 'item', 'item name', 'title',
+  'اسم المنتج', 'اسم الصنف', 'المنتج', 'اسم', 'الصنف',
+]);
+
+/** Convert common English/Arabic column names to the canonical import schema. */
+export function normalizeProductImportRows(rows) {
+  if (!Array.isArray(rows) || !rows.length) return [];
+  const originalHeaders = rows[0].map((value) => normalizeHeaderToken(value));
+  const genericIndexes = [];
+  const entries = [];
+
+  originalHeaders.forEach((token, index) => {
+    if (GENERIC_TITLE_HEADERS.has(token)) {
+      genericIndexes.push(index);
+      entries.push({ index, field: '__generic_title' });
+      return;
+    }
+    entries.push({
+      index,
+      field: HEADER_ALIASES.get(token) || token.replace(/\\s+/g, '_'),
+    });
+  });
+
+  const existingTitleEn = entries.some((entry) => entry.field === 'title_en');
+  const existingTitleAr = entries.some((entry) => entry.field === 'title_ar');
+  let titleArSourceIndex = entries.find((entry) => entry.field === 'title_ar')?.index;
+
+  for (const entry of entries) {
+    if (entry.field !== '__generic_title') continue;
+    if (!existingTitleEn) {
+      entry.field = 'title_en';
+      if (!existingTitleAr) titleArSourceIndex = entry.index;
+    } else {
+      entry.field = '__ignore_generic_title';
+    }
+  }
+
+  // A simple "Name"/"اسم المنتج" column is useful for store owners with their own sheets:
+  // use it as both language fields. An Arabic-only named column can also satisfy the required
+  // title field, while retaining the Arabic title when available.
+  const mapped = entries.filter((entry) => entry.field !== '__ignore_generic_title');
+  const hasTitleEn = mapped.some((entry) => entry.field === 'title_en');
+  const hasTitleAr = mapped.some((entry) => entry.field === 'title_ar');
+  const titleArIndex = mapped.find((entry) => entry.field === 'title_ar')?.index;
+
+  const outputHeaders = mapped.map((entry) => entry.field === '__generic_title' ? 'title_en' : entry.field);
+  const normalizedRows = [outputHeaders];
+  for (let rowIndex = 1; rowIndex < rows.length; rowIndex += 1) {
+    const source = rows[rowIndex] || [];
+    normalizedRows.push(mapped.map((entry) => source[entry.index] ?? ''));
+  }
+
+  if (!hasTitleEn && hasTitleAr) {
+    const enIndex = outputHeaders.length;
+    outputHeaders.push('title_en');
+    for (let rowIndex = 1; rowIndex < normalizedRows.length; rowIndex += 1) {
+      normalizedRows[rowIndex][enIndex] = rows[rowIndex]?.[titleArIndex] ?? '';
+    }
+  } else if (!hasTitleAr && titleArSourceIndex !== undefined) {
+    outputHeaders.push('title_ar');
+    for (let rowIndex = 1; rowIndex < normalizedRows.length; rowIndex += 1) {
+      normalizedRows[rowIndex].push(rows[rowIndex]?.[titleArSourceIndex] ?? '');
+    }
+  }
+
+  return normalizedRows;
+}
+
+/** Convert parsed worksheet rows into the same escaped CSV representation used by validation. */
+export function spreadsheetRowsToCsv(rows) {
+  return serializeCsvRows(normalizeProductImportRows(rows));
+}
+
+/** Read a CSV, XLSX, or XLS file. Excel files use the first worksheet and the same validation path. */
+export async function parseSpreadsheetFile(file) {
+  if (!file) throw new Error('no_file');
+  if (Number(file.size) > MAX_IMPORT_BYTES) throw new Error('file_too_large');
+  const fileName = String(file.name || '').toLowerCase();
+  if (fileName.endsWith('.csv') || String(file.type || '').toLowerCase().includes('csv')) {
+    return file.text();
+  }
+  if (!/\\.(xlsx|xls)$/.test(fileName)) throw new Error('unsupported_import_format');
+
+  let XLSX;
+  try {
+    XLSX = await import('https://esm.sh/xlsx@0.18.5?bundle');
+  } catch {
+    throw new Error('spreadsheet_parser_unavailable');
+  }
+
+  let workbook;
+  try {
+    workbook = XLSX.read(await file.arrayBuffer(), { type: 'array', cellDates: false, cellFormula: false });
+  } catch {
+    throw new Error('invalid_spreadsheet');
+  }
+  const firstSheet = workbook.SheetNames?.[0];
+  if (!firstSheet || !workbook.Sheets?.[firstSheet]) throw new Error('empty_spreadsheet');
+  const rows = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet], {
+    header: 1,
+    raw: false,
+    defval: '',
+    blankrows: false,
+  });
+  if (!rows.length) throw new Error('empty_spreadsheet');
+  return spreadsheetRowsToCsv(rows);
+}
+
 function slugifyCsv(text) {
   return String(text || '')
     .normalize('NFKD')
@@ -95,7 +247,7 @@ const clean = (value) => String(value ?? '').trim();
 const isTrue = (value) => ['1', 'true', 'yes', 'y'].includes(clean(value).toLowerCase());
 
 export function prepareProductImport(csvText, { categories = [], brands = [], existingProducts = [] } = {}) {
-  const table = parseCsvText(csvText);
+  const table = normalizeProductImportRows(parseCsvText(csvText));
   const errors = [];
   const items = [];
   let skipped = 0;
