@@ -10,6 +10,7 @@ const ROUTES = {
   overview: { min: 'staff', view: () => import('./views/overview.js') },
   products: { min: 'staff', view: () => import('./views/products.js') },
   orders: { min: 'staff', view: () => import('./views/orders.js') },
+  customers: { min: 'staff', view: () => import('./views/customers.js') },
   stock: { min: 'staff', view: () => import('./views/stock.js') },
   catalog: { min: 'manager', view: () => import('./views/catalog.js') },
   coupons: { min: 'manager', view: () => import('./views/coupons.js') },
