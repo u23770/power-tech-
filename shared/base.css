@@ -149,3 +149,47 @@ tr:last-child td { border-bottom: 0; }
   .no-print, header, footer, .skip-link { display: none !important; }
   body { background: var(--white); }
 }
+
+
+/* ---------- POWER TECH page transition loader ---------- */
+.page-loader {
+  position: fixed; inset: 0; z-index: 99999; display: grid; place-items: center;
+  padding: 24px; overflow: auto;
+  background: radial-gradient(circle at 50% 40%, #2b2e36 0%, #1c1e23 44%, #0d0e11 100%);
+  color: #f6f5f2; opacity: 1; visibility: visible;
+  transition: opacity .28s ease, visibility .28s ease; cursor: progress; text-align: center;
+}
+.page-loader.is-hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+.page-loader-card { display: flex; flex-direction: column; align-items: center; width: min(100%, 320px); gap: 0; }
+.page-loader-badge {
+  width: 68px; height: 68px; display: grid; place-items: center; color: #0d0e11;
+  border-radius: 20px; background: linear-gradient(145deg, #c9a646, #ecd9a0);
+  box-shadow: 0 12px 35px rgb(201 166 70 / .22), inset 0 1px rgb(255 255 255 / .42);
+  animation: page-loader-float 2.2s ease-in-out infinite;
+}
+.page-loader-badge svg { display: block; width: 36px; height: 36px; }
+.page-loader-wordmark { margin-top: 22px; color: #f6f5f2; font-size: 1.24rem; line-height: 1.3; font-weight: 800; letter-spacing: .16em; }
+.page-loader-subbrand { margin-top: 5px; color: #c4cad3; font-size: .68rem; line-height: 1.4; font-weight: 700; letter-spacing: .28em; }
+.page-loader-message { margin-top: 27px; color: #ecd9a0; font-size: 1rem; line-height: 1.6; font-weight: 650; }
+.page-loader-note { margin-top: 3px; color: #c4cad3; font-size: .84rem; line-height: 1.6; }
+.page-loader-track { width: 100%; height: 4px; margin-top: 24px; overflow: hidden; border-radius: 999px; background: rgb(196 202 211 / .2); }
+.page-loader-track span {
+  display: block; width: 36%; height: 100%; border-radius: inherit;
+  background: linear-gradient(90deg, #a8842a, #ecd9a0, #c9a646);
+  box-shadow: 0 0 14px rgb(201 166 70 / .42);
+  animation: page-loader-progress 1.45s ease-in-out infinite alternate;
+}
+@keyframes page-loader-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+@keyframes page-loader-progress { from { transform: translateX(-10%); width: 28%; } to { transform: translateX(245%); width: 42%; } }
+html[dir="rtl"] .page-loader-track span { animation-name: page-loader-progress-rtl; }
+@keyframes page-loader-progress-rtl { from { transform: translateX(10%); width: 28%; } to { transform: translateX(-245%); width: 42%; } }
+@media (max-width: 480px) {
+  .page-loader-card { width: min(100%, 290px); }
+  .page-loader-badge { width: 62px; height: 62px; border-radius: 18px; }
+  .page-loader-wordmark { font-size: 1.12rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .page-loader-badge, .page-loader-track span { animation: none !important; }
+  .page-loader-track span { width: 70%; transform: none; }
+}
+@media print { .page-loader { display: none !important; } }
