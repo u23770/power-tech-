@@ -29,8 +29,9 @@ test('coupon delete protects historical redemptions and supports full lifecycle 
   assert.match(coupons, /api\.updateCouponAdmin/);
   assert.match(coupons, /api\.setCouponActiveAdmin/);
   assert.match(coupons, /max_redemptions/);
-  assert.match(coupons, /admin\.coupons\.product_discounts/);
-  assert.match(coupons, /href: '#\/products'/);
+  assert.match(coupons, /promotion_type/);
+  assert.match(coupons, /target_product_id/);
+  assert.match(coupons, /target_category_id/);
   assert.match(coupons, /formTitle\.textContent = t\('admin\.coupons\.edit_title'\)/);
 });
 
