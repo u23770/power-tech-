@@ -87,9 +87,62 @@
     }, 5000);
   }
 
-  document.addEventListener('DOMContentLoaded', function () { setBusy(true); });
-  window.addEventListener('load', function () { if (!navigationPending) hide(); }, { once: true });
-  window.addEventListener('pageshow', function (event) { if (event.persisted) hideImmediately(); });
+  document.addEventListener('DOMContentLoaded', function () {
+    setBusy(true);
+  });
+
+  function appStillLoading() {
+    var app = document.querySelector('#app, #admin-main');
+    if (!app) return false;
+    // Keep the branded overlay up while page-specific loading placeholders or
+    // async section spinners are still visible. This prevents a second
+    // "Loading…" screen flashing after the shared loader disappears.
+    return Boolean(app.querySelector(
+      '.spinner, [data-i18n="state.loading"], [data-i18n="admin.checking"]'
+    ));
+  }
+
+  function waitForAppReady() {
+    var finished = false;
+    var observer = null;
+    var safetyTimer = null;
+
+    function finishIfReady() {
+      if (finished || appStillLoading()) return;
+      finished = true;
+      if (observer) observer.disconnect();
+      if (safetyTimer) window.clearTimeout(safetyTimer);
+      hide();
+    }
+
+    observer = new MutationObserver(finishIfReady);
+    observer.observe(document.documentElement, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['class', 'hidden', 'data-i18n']
+    });
+
+    // Give module scripts a moment to mount their initial loading states.
+    window.setTimeout(finishIfReady, 180);
+
+    // Fail safe if a backend request never settles; the app's own error/retry
+    // UI remains available and the global overlay must never trap the visitor.
+    safetyTimer = window.setTimeout(function () {
+      if (finished) return;
+      finished = true;
+      if (observer) observer.disconnect();
+      hide();
+    }, 12000);
+  }
+
+  window.addEventListener('load', function () {
+    waitForAppReady();
+  }, { once: true });
+
+  window.addEventListener('pageshow', function (event) {
+    if (event.persisted) hideImmediately();
+  });
 
   document.addEventListener('click', function (event) {
     if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
