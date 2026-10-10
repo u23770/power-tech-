@@ -239,6 +239,7 @@ export async function render(main) {
     priority.input.value = '0';
     active.input.checked = true;
     saveBtn.textContent = t('admin.coupons.create');
+    saveBtn.dataset.label = t('admin.coupons.create');
     formTitle.textContent = t('admin.coupons.form_title');
     cancelBtn.hidden = true;
     refreshFormFields();
@@ -267,6 +268,7 @@ export async function render(main) {
     if (promotion.target_product_id) target.input.value = promotion.target_product_id;
     if (promotion.target_category_id) target.input.value = promotion.target_category_id;
     saveBtn.textContent = t('admin.coupons.update');
+    saveBtn.dataset.label = t('admin.coupons.update');
     formTitle.textContent = t('admin.coupons.edit_title');
     cancelBtn.hidden = false;
     form.scrollIntoView({ behavior: 'smooth', block: 'start' });
