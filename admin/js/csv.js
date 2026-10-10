@@ -71,12 +71,12 @@ function normalizeHeaderToken(value) {
   return String(value ?? '')
     .normalize('NFKC')
     .toLowerCase()
-    .replace(/[\\u064B-\\u065F\\u0670]/g, '')
+    .replace(/[\u064B-\u065F\u0670]/g, '')
     .replace(/[أإآ]/g, 'ا')
     .replace(/ى/g, 'ي')
-    .replace(/[_\\-./]+/g, ' ')
-    .replace(/[^\\p{L}\\p{N} ]/gu, ' ')
-    .replace(/\\s+/g, ' ')
+    .replace(/[_-]+/g, ' ')
+    .replace(/[^\p{L}\p{N} ]/gu, ' ')
+    .replace(/\s+/g, ' ')
     .trim();
 }
 
