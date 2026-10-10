@@ -45,7 +45,7 @@ test('product import resolves human-readable category names and creates a safe s
     brands: [],
     existingProducts: [],
   });
-  assert.equal(result.errors.length, 0);
+  assert.equal(result.errors.length, 0, JSON.stringify(result.errors));
   assert.equal(result.items.length, 1);
   assert.equal(result.items[0].product.category_id, 'cat-1');
   assert.equal(result.items[0].product.title_ar, 'لابتوب تجريبي');
