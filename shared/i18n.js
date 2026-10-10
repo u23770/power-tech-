@@ -85,6 +85,8 @@ const EXTRA_EN = {
   'admin.order.customer': 'Customer and delivery',
   'admin.order.items': 'Items',
 
+  'admin.products.quick_start': 'Quick start: add a product, fill in its name and regular price, then save. Set Status to Published when it is ready to appear in the store. Other details are optional unless marked required.',
+  'admin.product.editor_help': 'Only the English title and regular price are required. Fill any extra fields you know; leave the rest blank. A Draft stays hidden. Choose Published only when the product is ready for customers.',
   'admin.nav.catalog': 'Catalog',
   'admin.nav.coupons': 'Coupons & discounts',
   'admin.nav.settings': 'Store settings',
@@ -422,6 +424,8 @@ const EXTRA_AR = {
   'admin.order.customer': 'العميل والتوصيل',
   'admin.order.items': 'المنتجات',
 
+  'admin.products.quick_start': 'بداية سريعة: أضف منتجًا واكتب اسمه وسعره الأساسي ثم احفظ. اختر «منشور» عندما يصبح جاهزًا للظهور في المتجر. باقي البيانات اختيارية ما لم يُذكر أنها مطلوبة.',
+  'admin.product.editor_help': 'المطلوب فقط هو اسم المنتج بالإنجليزية والسعر الأساسي. املأ البيانات الإضافية التي تعرفها واترك الباقي فارغًا. المسودة لا تظهر للعملاء؛ اختر «منشور» عندما يصبح المنتج جاهزًا.',
   'admin.nav.catalog': 'التصنيفات والعلامات',
   'admin.nav.coupons': 'الكوبونات',
   'admin.nav.settings': 'إعدادات المتجر',
@@ -442,8 +446,8 @@ const EXTRA_AR = {
   'admin.customers.no_orders': 'لا توجد طلبات',
   'admin.customers.unnamed': 'عميل بلا اسم',
   'admin.catalog.intro': 'إدارة تصنيفات المنتجات والعلامات التجارية الظاهرة في المتجر.',
-'admin.csv.title': 'استيراد وتصدير المنتجات CSV',
-  'admin.csv.intro': 'صدّر كتالوج المنتجات كاملًا أو تحقّق من ملف CSV قبل الاستيراد. الاستيراد يضيف منتجات جديدة، وقاعدة البيانات تتحقق من كل عملية.',
+'admin.csv.title': 'استيراد وتصدير المنتجات',
+  'admin.csv.intro': 'استورد المنتجات من ملفات Excel أو CSV، أو صدّر الكتالوج لفتحه في Excel. راجع المعاينة قبل حفظ أي شيء.',
   'admin.csv.file': 'ملف CSV أو Excel (بحد أقصى 5 ميجابايت)',
 
   'admin.csv.steps': 'الطريقة سهلة: اختر ملف Excel أو CSV، افحصه، راجع المعاينة، ثم استورد. الاستيراد يضيف منتجات جديدة فقط ولا يستبدل المنتجات الحالية.',
@@ -569,7 +573,7 @@ const EXTRA_AR = {
   'admin.coupons.status.used_up': 'اكتمل الاستخدام',
   'admin.settings.intro': 'عدّل ما يراه العملاء وطريقة إتمام الطلب باستخدام نماذج سهلة، من غير الحاجة إلى كتابة كود أو JSON.',
   'admin.settings.quick_help': 'افتح القسم وعدّل الحقول ثم اضغط حفظ. تظهر التغييرات في المتجر بعد إعادة تحميله. لا تفعّل الدفع أو التوصيل إلا إذا كان المتجر يوفرهما فعلاً.',
-  'admin.settings.english': 'المحتوى بالعربية؟ لا، المحتوى بالإنجليزية',
+  'admin.settings.english': 'المحتوى بالإنجليزية',
   'admin.settings.arabic': 'المحتوى بالعربية',
   'admin.settings.delivery': 'إتاحة التوصيل',
   'admin.settings.pickup': 'إتاحة الاستلام من المتجر',
