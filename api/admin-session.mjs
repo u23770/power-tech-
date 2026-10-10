@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
+import { CONFIG } from '../shared/config.js';
 
 const COOKIE_NAME = 'pt_admin_gate';
 
@@ -48,8 +49,8 @@ async function handle(request) {
     return json(401, { ok: false, error: 'access_required' });
   }
 
-  const supabaseUrl = (process.env.SUPABASE_URL || '').replace(/\/$/, '');
-  const anonKey = process.env.SUPABASE_ANON_KEY;
+  const supabaseUrl = (process.env.SUPABASE_URL || CONFIG.SUPABASE_URL || '').replace(/\/$/, '');
+  const anonKey = process.env.SUPABASE_ANON_KEY || CONFIG.SUPABASE_ANON_KEY;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!supabaseUrl.startsWith('https://') || !anonKey || !serviceRoleKey) {
     return json(503, { ok: false, error: 'not_configured' });
