@@ -89,7 +89,7 @@ from (values
 on conflict (slug) do nothing;
 
 -- Quantity-based stock is intentionally varied to exercise in-stock, low-stock and out-of-stock states.
-insert into public.inventory (product_id, quantity_on_hand, low_stock_threshold)
+insert into public.inventory as existing_inventory (product_id, quantity_on_hand, low_stock_threshold)
 select p.id, v.quantity_on_hand, v.low_stock_threshold
 from (values
   ('DEMO-LAP-001', 6, 2),
@@ -105,7 +105,10 @@ from (values
   ('DEMO-GPU-001', 2, 1)
 ) as v(sku, quantity_on_hand, low_stock_threshold)
 join public.products p on p.sku = v.sku
-on conflict (product_id) do nothing;
+on conflict (product_id) do update
+set quantity_on_hand = excluded.quantity_on_hand,
+    low_stock_threshold = excluded.low_stock_threshold
+where existing_inventory.quantity_on_hand = 0 and existing_inventory.low_stock_threshold = 0;
 
 -- Individually tracked sample units exercise used/refurbished inventory without inventing real serials.
 insert into public.inventory_units
