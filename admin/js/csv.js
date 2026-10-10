@@ -260,6 +260,13 @@ export function prepareProductImport(csvText, { categories = [], brands = [], ex
   if (missing.length) return { items, errors: [{ line: 1, code: 'missing_required_columns', details: missing.join(', ') }], skipped };
 
   const categoryBySlug = new Map(categories.map((c) => [clean(c.slug).toLowerCase(), c]));
+  const categoryByName = new Map();
+  for (const category of categories) {
+    for (const name of [category.name_en, category.name_ar]) {
+      const normalizedName = normalizeHeaderToken(name);
+      if (normalizedName) categoryByName.set(normalizedName, category);
+    }
+  }
   const brandByName = new Map(brands.map((b) => [clean(b.name).toLowerCase(), b]));
   const seenSlugs = new Set(existingProducts.map((p) => clean(p.slug).toLowerCase()).filter(Boolean));
   const seenSkus = new Set(existingProducts.map((p) => clean(p.sku)).filter(Boolean));
@@ -279,7 +286,7 @@ export function prepareProductImport(csvText, { categories = [], brands = [], ex
     const titleEn = clean(record.title_en);
     const titleAr = clean(record.title_ar);
     const sku = clean(record.sku);
-    const slug = clean(record.slug) || slugifyCsv(titleEn);
+    const slug = clean(record.slug) || slugifyCsv(titleEn) || `product-${line}`;
     const condition = (clean(record.condition) || 'new').toLowerCase();
     const trackMode = (clean(record.track_mode) || 'quantity').toLowerCase();
     const status = (clean(record.status) || 'draft').toLowerCase();
@@ -293,7 +300,7 @@ export function prepareProductImport(csvText, { categories = [], brands = [], ex
     const brandName = clean(record.brand);
     const categorySlug = clean(record.category_slug).toLowerCase();
     const brand = brandName ? brandByName.get(brandName.toLowerCase()) : null;
-    const category = categorySlug ? categoryBySlug.get(categorySlug) : null;
+    const category = categorySlug ? (categoryBySlug.get(categorySlug) || categoryByName.get(normalizeHeaderToken(categorySlug))) : null;
     const specsResult = parseSpecsCsv(record.specs);
 
     if (titleEn.length < 2 || titleEn.length > 200) add('invalid_title');
