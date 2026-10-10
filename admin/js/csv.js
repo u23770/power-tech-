@@ -188,7 +188,7 @@ export async function parseSpreadsheetFile(file) {
   if (fileName.endsWith('.csv') || String(file.type || '').toLowerCase().includes('csv')) {
     return file.text();
   }
-  if (!/\\.(xlsx|xls)$/.test(fileName)) throw new Error('unsupported_import_format');
+  if (!/\.(xlsx|xls)$/.test(fileName)) throw new Error('unsupported_import_format');
 
   let XLSX;
   try {
