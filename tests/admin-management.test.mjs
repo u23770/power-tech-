@@ -41,8 +41,8 @@ test('store settings use simple forms instead of requiring non-technical users t
   assert.match(settings, /content_hero/);
   assert.match(settings, /content_why/);
   assert.match(settings, /contact/);
-  assert.match(settings, /api\\.saveStoreSettingAdmin/);
-  assert.doesNotMatch(settings, /JSON\\.parse\\(textarea\\.value\\)/);
+  assert.match(settings, /api\.saveStoreSettingAdmin/);
+  assert.doesNotMatch(settings, /JSON\.parse\(textarea\.value\)/);
 });
 test('new admin labels have Arabic and English translations', () => {
   for (const key of [
