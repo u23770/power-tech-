@@ -90,6 +90,7 @@ function createCsvTools(ctx) {
     'aria-label': t('admin.csv.file'),
   } });
   const note = el('p', { className: 'muted' }, t('admin.csv.intro'));
+  const workflowNote = el('p', { className: 'hint' }, t('admin.csv.steps'));
   const steps = el('ol', { className: 'item-list' },
     ...['step1', 'step2', 'step3', 'step4'].map((step) => el('li', {}, t(`admin.csv.${step}`))));
   const status = el('div', { className: 'status', attrs: { role: 'status', 'aria-live': 'polite', hidden: true } });
@@ -100,7 +101,7 @@ function createCsvTools(ctx) {
   const templateLink = el('a', { className: 'btn btn-ghost', attrs: { href: '/data/products-template.csv', download: 'products-template.csv' } }, t('admin.csv.template'));
   section.append(
     el('h2', { className: 'card-title', attrs: { id: 'csv-tools-title' } }, t('admin.csv.title')),
-    note, steps,
+    note, workflowNote, steps,
     el('div', { className: 'field' }, el('label', { attrs: { for: 'products-csv-file' } }, t('admin.csv.file')), file),
     el('div', { className: 'row' }, templateLink, exportBtn, validateBtn, importBtn),
     status, preview
