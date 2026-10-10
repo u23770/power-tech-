@@ -126,7 +126,7 @@ export function normalizeProductImportRows(rows) {
     }
     entries.push({
       index,
-      field: HEADER_ALIASES.get(token) || token.replace(/\\s+/g, '_'),
+      field: HEADER_ALIASES.get(token) || token.replace(/\s+/g, '_'),
     });
   });
 
