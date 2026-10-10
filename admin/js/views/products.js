@@ -4,7 +4,7 @@ import { el, clear, setStatus, setBusy, errorMessage, confirmAction } from '/sha
 import { formatMoney } from '/shared/format.js';
 import { PATTERNS, parseSpecs, specsToText, slugify } from '/shared/validators.js';
 import * as api from '../api.js';
-import { serializeCsvRows, prepareProductImport } from '../csv.js';
+import { serializeCsvRows, prepareProductImport, parseSpreadsheetFile } from '../csv.js';
 
 const MONEY = /^\d{1,10}(\.\d{1,2})?$/;
 const STATUSES = ['draft', 'published', 'unavailable', 'archived'];
@@ -46,6 +46,7 @@ async function renderList(main, ctx) {
     el('div', { className: 'page-title' },
       el('h1', { className: 'card-title' }, t('admin.nav.products')),
       ctx.can('staff') ? el('a', { className: 'btn btn-gold', attrs: { href: '#/products/new' } }, t('admin.new_product')) : null),
+    el('p', { className: 'hint' }, t('admin.products.quick_start')),
     ctx.can('manager') ? createCsvTools(ctx) : null,
     form, host);
 
@@ -85,10 +86,13 @@ async function renderList(main, ctx) {
 function createCsvTools(ctx) {
   const section = el('section', { className: 'card form', attrs: { 'aria-labelledby': 'csv-tools-title' } });
   const file = el('input', { className: 'input', attrs: {
-    id: 'products-csv-file', name: 'file', type: 'file', accept: '.csv,text/csv',
+    id: 'products-csv-file', name: 'file', type: 'file', accept: '.csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel',
     'aria-label': t('admin.csv.file'),
   } });
   const note = el('p', { className: 'muted' }, t('admin.csv.intro'));
+  const workflowNote = el('p', { className: 'hint' }, t('admin.csv.steps'));
+  const steps = el('ol', { className: 'item-list' },
+    ...['step1', 'step2', 'step3', 'step4'].map((step) => el('li', {}, t(`admin.csv.${step}`))));
   const status = el('div', { className: 'status', attrs: { role: 'status', 'aria-live': 'polite', hidden: true } });
   const preview = el('div', { className: 'stack' });
   const validateBtn = el('button', { className: 'btn btn-dark', attrs: { type: 'button' } }, t('admin.csv.validate'));
@@ -97,7 +101,7 @@ function createCsvTools(ctx) {
   const templateLink = el('a', { className: 'btn btn-ghost', attrs: { href: '/data/products-template.csv', download: 'products-template.csv' } }, t('admin.csv.template'));
   section.append(
     el('h2', { className: 'card-title', attrs: { id: 'csv-tools-title' } }, t('admin.csv.title')),
-    note,
+    note, workflowNote, steps,
     el('div', { className: 'field' }, el('label', { attrs: { for: 'products-csv-file' } }, t('admin.csv.file')), file),
     el('div', { className: 'row' }, templateLink, exportBtn, validateBtn, importBtn),
     status, preview
@@ -122,7 +126,7 @@ function createCsvTools(ctx) {
     setBusy(validateBtn, true, t('state.loading'));
     try {
       const [csvText, existingProducts, categories, brands] = await Promise.all([
-        selected.text(),
+        parseSpreadsheetFile(selected),
         api.listProductsForCsvAdmin(),
         api.listCategoriesAdmin(),
         api.listBrandsAdmin(),
@@ -154,8 +158,12 @@ function createCsvTools(ctx) {
       }
     } catch (err) {
       prepared = null;
-      setStatus(status, t(err?.message === 'invalid_csv_quote' || err?.message === 'invalid_csv_quotes'
-        ? 'admin.csv.invalid_format' : 'err.unknown'), 'error');
+      const parserMessage = String(err?.message || '');
+      const importErrorKey = parserMessage === 'invalid_csv_quote' || parserMessage === 'invalid_csv_quotes'
+        ? 'admin.csv.invalid_format'
+        : ['file_too_large', 'unsupported_import_format', 'spreadsheet_parser_unavailable', 'invalid_spreadsheet', 'empty_spreadsheet']
+          .includes(parserMessage) ? `admin.csv.${parserMessage}` : 'err.unknown';
+      setStatus(status, t(importErrorKey), 'error');
     } finally {
       setBusy(validateBtn, false);
     }
@@ -350,6 +358,7 @@ async function renderEditor(main, ctx, id) {
   const titleH = el('h1', { className: 'card-title', attrs: { id: 'editor-title' } }, isNew ? t('admin.new_product') : (lang === 'ar' && p.title_ar ? p.title_ar : p.title_en));
 
   const form = el('form', { className: 'card form', attrs: { novalidate: true, 'aria-labelledby': 'editor-title' } },
+    el('p', { className: 'hint' }, t('admin.product.editor_help')),
     el('div', { className: 'two-col' },
       el('fieldset', { className: 'card' },
         el('legend', { attrs: { 'data-i18n': 'admin.section.basic' } }, t('admin.section.basic')),

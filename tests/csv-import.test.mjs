@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseCsvText, serializeCsvRows, prepareProductImport } from '../admin/js/csv.js';
+import { parseCsvText, serializeCsvRows, prepareProductImport, spreadsheetRowsToCsv, normalizeProductImportRows, parseSpreadsheetFile } from '../admin/js/csv.js';
 
 test('CSV parser preserves commas, escaped quotes and embedded newlines', () => {
   const rows = parseCsvText('title_en,description_en\r\n"Workstation, Pro","line one\nline ""two"""\r\n');
@@ -13,6 +13,53 @@ test('CSV parser preserves commas, escaped quotes and embedded newlines', () => 
 test('CSV serializer quotes delimiters, quotes and line breaks and round-trips', () => {
   const rows = [['title_en', 'description_en'], ['Workstation, Pro', 'line one\nline "two"']];
   assert.deepEqual(parseCsvText(serializeCsvRows(rows)), rows);
+});
+
+test('Excel extensions reach the spreadsheet parser instead of being rejected as unsupported', async () => {
+  for (const name of ['products.xlsx', 'products.xls']) {
+    await assert.rejects(
+      parseSpreadsheetFile({ name, size: 10, arrayBuffer: async () => new ArrayBuffer(0) }),
+      (error) => error.message === 'spreadsheet_parser_unavailable',
+      `${name} should pass extension validation before parser loading`,
+    );
+  }
+});
+
+test('Excel sheet rows are converted to CSV without losing header names or escaped values', () => {
+  const rows = [
+    ['title_en', 'description_en', 'price'],
+    ['Workstation, Pro', 'Line 1\nLine "two"', 12500],
+  ];
+  assert.deepEqual(parseCsvText(spreadsheetRowsToCsv(rows)), [
+    ['title_en', 'description_en', 'price'],
+    ['Workstation, Pro', 'Line 1\nLine "two"', '12500'],
+  ]);
+});
+
+test('Arabic Excel headings map to product fields and duplicate a generic product name safely', () => {
+  const rows = normalizeProductImportRows([
+    ['اسم المنتج', 'السعر', 'الكمية', 'التصنيف', 'الماركة', 'سعر الخصم'],
+    ['لابتوب تجريبي', 12000, 4, 'لابتوبات', 'Lenovo', 11000],
+  ]);
+  assert.deepEqual(rows[0], ['title_en', 'price', 'quantity', 'category_slug', 'brand', 'sale_price', 'title_ar']);
+  assert.equal(rows[1][0], 'لابتوب تجريبي');
+  assert.equal(rows[1][6], 'لابتوب تجريبي');
+});
+
+test('product import resolves human-readable category names and creates a safe slug for Arabic-only names', () => {
+  const result = prepareProductImport([
+    'اسم المنتج,السعر,التصنيف',
+    'لابتوب تجريبي,12000,لابتوبات',
+  ].join('\n'), {
+    categories: [{ id: 'cat-1', slug: 'laptops', name_en: 'Laptops', name_ar: 'لابتوبات' }],
+    brands: [],
+    existingProducts: [],
+  });
+  assert.equal(result.errors.length, 0, JSON.stringify(result.errors));
+  assert.equal(result.items.length, 1);
+  assert.equal(result.items[0].product.category_id, 'cat-1');
+  assert.equal(result.items[0].product.title_ar, 'لابتوب تجريبي');
+  assert.match(result.items[0].product.slug, /^product-2$/);
 });
 
 test('product import skips template examples and resolves known brand/category values', () => {
@@ -50,6 +97,18 @@ test('product import rejects duplicate SKUs and unknown categories before writes
 });
 
 import { readFile as readSource } from 'node:fs/promises';
+
+test('product import control accepts Excel formats and tells users the import steps', async () => {
+  const [view, parser] = await Promise.all([
+    readSource(new URL('../admin/js/views/products.js', import.meta.url), 'utf8'),
+    readSource(new URL('../admin/js/csv.js', import.meta.url), 'utf8'),
+  ]);
+  assert.match(view, /\.xlsx/);
+  assert.match(view, /\.xls/);
+  assert.match(view, /parseSpreadsheetFile/);
+  assert.match(parser, /xlsx@0\.18\.5/);
+  assert.match(view, /admin\.csv\.steps/);
+});
 
 test('CSV export view is manager-gated and does not export private cost data', async () => {
   const [view, apiSource] = await Promise.all([

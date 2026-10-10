@@ -59,7 +59,7 @@ export async function mountLayout({ active = '' } = {}) {
     }
   }
 
-  header.replaceChildren(buildHeader({ active, categories, preservedQuery }));
+  header.replaceChildren(buildHeader({ active, categories, preservedQuery, settings }));
   if (footer) footer.replaceChildren(buildFooter(settings));
   applyI18n(document);
   updateCartBadge();
@@ -72,8 +72,12 @@ function navLink(href, key, active) {
   }, t(key));
 }
 
-function buildHeader({ active, categories, preservedQuery }) {
+function buildHeader({ active, categories, preservedQuery, settings }) {
   const lang = getLang();
+  const configuredName = settings?.store_name;
+  const storeName = (configuredName && typeof configuredName === 'object'
+    ? configuredName[lang] || configuredName.en
+    : configuredName) || 'POWER TECH';
   const menuToggle = el('button', {
     className: 'icon-btn menu-toggle',
     attrs: { type: 'button', 'aria-expanded': 'false', 'aria-controls': 'main-nav', 'aria-label': t('nav.menu') },
@@ -117,7 +121,7 @@ function buildHeader({ active, categories, preservedQuery }) {
     el('button', { className: 'icon-btn menu-close', attrs: { type: 'button', 'aria-label': t('nav.close') }, on: { click: toggleMenu } }, icon(ICONS.close)));
 
   const top = el('div', { className: 'container header-inner' },
-    brandMark({ href: '/customer/index.html' }),
+    brandMark({ href: '/customer/index.html', name: storeName }),
     search,
     menuToggle,
     nav);
@@ -159,6 +163,10 @@ document.addEventListener('keydown', (event) => {
 function buildFooter(settings) {
   const contact = settings.contact || {};
   const lang = getLang();
+  const configuredName = settings?.store_name;
+  const storeName = (configuredName && typeof configuredName === 'object'
+    ? configuredName[lang] || configuredName.en
+    : configuredName) || 'POWER TECH';
   const txt = (v) => (v && typeof v === 'object' ? (v[lang] || v.en || '') : (v || ''));
   const rows = [];
   const addLink = (label, href) => rows.push(el('li', {}, el('a', { attrs: { href, rel: 'noopener' } }, label)));
@@ -179,7 +187,7 @@ function buildFooter(settings) {
   const currency = settings.currency?.code || 'EGP';
   return el('div', { className: 'container footer-inner' },
     el('div', {},
-      el('p', { className: 'footer-brand' }, 'POWER TECH'),
+      el('p', { className: 'footer-brand' }, storeName),
       el('p', { className: 'muted' }, t('app.tagline')),
       el('p', { className: 'hint' }, t('footer.note', { c: currency }))),
     rows.length ? el('div', {}, el('h2', { className: 'footer-h' }, t('footer.contact')), el('ul', { className: 'plain-list' }, rows)) : null,

@@ -29,14 +29,21 @@ test('coupon delete protects historical redemptions and supports full lifecycle 
   assert.match(coupons, /api\.updateCouponAdmin/);
   assert.match(coupons, /api\.setCouponActiveAdmin/);
   assert.match(coupons, /max_redemptions/);
+  assert.match(coupons, /admin\.coupons\.product_discounts/);
+  assert.match(coupons, /href: '#\/products'/);
+  assert.match(coupons, /formTitle\.textContent = t\('admin\.coupons\.edit_title'\)/);
 });
 
-test('store settings editor parses JSON and saves only through the admin API', () => {
-  assert.match(settings, /JSON\.parse\(textarea\.value\)/);
+test('store settings use simple forms instead of requiring non-technical users to edit JSON', () => {
+  assert.match(settings, /buildSettingFields/);
+  assert.match(settings, /checkout_options/);
+  assert.match(settings, /guest_checkout/);
+  assert.match(settings, /content_hero/);
+  assert.match(settings, /content_why/);
+  assert.match(settings, /contact/);
   assert.match(settings, /api\.saveStoreSettingAdmin/);
-  assert.match(settings, /const SUPPORTED = \{/);
+  assert.doesNotMatch(settings, /JSON\.parse\(textarea\.value\)/);
 });
-
 test('new admin labels have Arabic and English translations', () => {
   for (const key of [
     'admin.nav.catalog', 'admin.nav.coupons', 'admin.nav.settings',
