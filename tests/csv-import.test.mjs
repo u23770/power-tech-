@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseCsvText, serializeCsvRows, prepareProductImport, spreadsheetRowsToCsv } from '../admin/js/csv.js';
+import { parseCsvText, serializeCsvRows, prepareProductImport, spreadsheetRowsToCsv, normalizeProductImportRows } from '../admin/js/csv.js';
 
 test('CSV parser preserves commas, escaped quotes and embedded newlines', () => {
   const rows = parseCsvText('title_en,description_en\r\n"Workstation, Pro","line one\nline ""two"""\r\n');
@@ -24,6 +24,32 @@ test('Excel sheet rows are converted to CSV without losing header names or escap
     ['title_en', 'description_en', 'price'],
     ['Workstation, Pro', 'Line 1\nLine "two"', '12500'],
   ]);
+});
+
+test('Arabic Excel headings map to product fields and duplicate a generic product name safely', () => {
+  const rows = normalizeProductImportRows([
+    ['اسم المنتج', 'السعر', 'الكمية', 'التصنيف', 'الماركة', 'سعر الخصم'],
+    ['لابتوب تجريبي', 12000, 4, 'لابتوبات', 'Lenovo', 11000],
+  ]);
+  assert.deepEqual(rows[0], ['title_en', 'price', 'quantity', 'category_slug', 'brand', 'sale_price', 'title_ar']);
+  assert.equal(rows[1][0], 'لابتوب تجريبي');
+  assert.equal(rows[1][6], 'لابتوب تجريبي');
+});
+
+test('product import resolves human-readable category names and creates a safe slug for Arabic-only names', () => {
+  const result = prepareProductImport([
+    'اسم المنتج,السعر,التصنيف',
+    'لابتوب تجريبي,12000,لابتوبات',
+  ].join('\\n'), {
+    categories: [{ id: 'cat-1', slug: 'laptops', name_en: 'Laptops', name_ar: 'لابتوبات' }],
+    brands: [],
+    existingProducts: [],
+  });
+  assert.equal(result.errors.length, 0);
+  assert.equal(result.items.length, 1);
+  assert.equal(result.items[0].product.category_id, 'cat-1');
+  assert.equal(result.items[0].product.title_ar, 'لابتوب تجريبي');
+  assert.match(result.items[0].product.slug, /^product-2$/);
 });
 
 test('product import skips template examples and resolves known brand/category values', () => {
