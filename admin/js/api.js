@@ -243,3 +243,95 @@ export async function listAudit({ limit = 100 } = {}) {
   if (error) throw error;
   return data;
 }
+
+
+// ---------- Catalogue management ----------
+export async function insertCategoryAdmin(row) {
+  const { data, error } = await db().from('categories').insert(row).select('id').single();
+  if (error) throw error;
+  return data.id;
+}
+
+export async function updateCategoryAdmin(id, row) {
+  const { error } = await db().from('categories').update(row).eq('id', id);
+  if (error) throw error;
+}
+
+export async function setCategoryActiveAdmin(id, is_active) {
+  const { error } = await db().from('categories').update({ is_active }).eq('id', id);
+  if (error) throw error;
+}
+
+export async function deleteCategoryAdmin(id) {
+  const { count, error: countError } = await db().from('products')
+    .select('id', { count: 'exact', head: true }).eq('category_id', id);
+  if (countError) throw countError;
+  if ((count ?? 0) > 0) throw new Error('category_in_use');
+  const { error } = await db().from('categories').delete().eq('id', id);
+  if (error) throw error;
+}
+
+export async function insertBrandAdmin(name) {
+  const clean = (name || '').trim();
+  if (clean.length < 1 || clean.length > 80) throw new Error('invalid_brand_name');
+  const { data, error } = await db().from('brands').insert({ name: clean }).select('id').single();
+  if (error) throw error;
+  return data.id;
+}
+
+export async function deleteBrandAdmin(id) {
+  const { count, error: countError } = await db().from('products')
+    .select('id', { count: 'exact', head: true }).eq('brand_id', id);
+  if (countError) throw countError;
+  if ((count ?? 0) > 0) throw new Error('brand_in_use');
+  const { error } = await db().from('brands').delete().eq('id', id);
+  if (error) throw error;
+}
+
+// ---------- Coupons ----------
+export async function listCouponsAdmin() {
+  const { data, error } = await db().from('coupons')
+    .select('id,code,kind,value,min_subtotal,starts_at,ends_at,max_redemptions,redemptions_count,first_order_only,applies_to_sale_items,is_active,created_at,updated_at')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data;
+}
+
+export async function insertCouponAdmin(row) {
+  const { data, error } = await db().from('coupons').insert(row).select('id').single();
+  if (error) throw error;
+  return data.id;
+}
+
+export async function updateCouponAdmin(id, row) {
+  const { error } = await db().from('coupons').update(row).eq('id', id);
+  if (error) throw error;
+}
+
+export async function setCouponActiveAdmin(id, is_active) {
+  const { error } = await db().from('coupons').update({ is_active }).eq('id', id);
+  if (error) throw error;
+}
+
+export async function deleteCouponAdmin(id) {
+  const { count, error: countError } = await db().from('coupon_redemptions')
+    .select('id', { count: 'exact', head: true }).eq('coupon_id', id);
+  if (countError) throw countError;
+  if ((count ?? 0) > 0) throw new Error('coupon_in_use');
+  const { error } = await db().from('coupons').delete().eq('id', id);
+  if (error) throw error;
+}
+
+// ---------- Store settings ----------
+export async function listStoreSettingsAdmin() {
+  const { data, error } = await db().from('store_settings')
+    .select('key,value,is_public,updated_at').order('key');
+  if (error) throw error;
+  return data;
+}
+
+export async function saveStoreSettingAdmin(key, value, is_public = true) {
+  const { error } = await db().from('store_settings').upsert(
+    { key, value, is_public }, { onConflict: 'key' });
+  if (error) throw error;
+}

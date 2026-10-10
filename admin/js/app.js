@@ -11,6 +11,9 @@ const ROUTES = {
   products: { min: 'staff', view: () => import('./views/products.js') },
   orders: { min: 'staff', view: () => import('./views/orders.js') },
   stock: { min: 'staff', view: () => import('./views/stock.js') },
+  catalog: { min: 'manager', view: () => import('./views/catalog.js') },
+  coupons: { min: 'manager', view: () => import('./views/coupons.js') },
+  settings: { min: 'manager', view: () => import('./views/settings.js') },
   audit: { min: 'manager', view: () => import('./views/audit.js') },
 };
 const POLL_MS = 45000;

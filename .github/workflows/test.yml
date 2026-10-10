@@ -14,3 +14,12 @@ jobs:
           node-version: 22
       - run: npm install --ignore-scripts
       - run: npm test
+      - name: Syntax-check JavaScript modules
+        shell: bash
+        run: |
+          set -euo pipefail
+          for dir in admin customer shared api; do
+            if [ -d "$dir" ]; then
+              find "$dir" -type f -name '*.js' -print0
+            fi
+          done | xargs -0 -r -n1 node --check
