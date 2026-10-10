@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#0d0e11">
+  <title>POWER TECH · Admin access</title>
+  <link rel="stylesheet" href="/admin/access.css">
+  <script src="/shared/boot.js"></script>
+  <script defer src="/admin/access.js"></script>
+</head>
+<body>
+  <main class="access-shell">
+    <section class="access-card" aria-labelledby="access-title">
+      <div class="bolt" aria-hidden="true">
+        <svg viewBox="0 0 48 48" focusable="false"><path d="M27.6 3.5 10.8 26h11.1l-1.6 18.5L37.2 20H25.8l1.8-16.5Z" fill="currentColor"/></svg>
+      </div>
+      <div class="wordmark">POWER TECH</div>
+      <p class="eyebrow" id="access-kicker">PRIVATE ADMIN AREA</p>
+      <h1 id="access-title">Admin access</h1>
+      <p class="intro" id="access-intro">Enter the private access code to continue to the staff sign-in page.</p>
+      <form id="access-form" novalidate>
+        <label id="access-label" for="access-code">Access code</label>
+        <input id="access-code" name="code" type="password" inputmode="text" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false" required maxlength="128" aria-describedby="access-help access-status">
+        <p class="hint" id="access-help">This code opens the gate only. A staff account is still required.</p>
+        <button id="access-submit" type="submit">Continue</button>
+        <p id="access-status" class="status" role="status" aria-live="polite" hidden></p>
+      </form>
+      <div class="bottom-row">
+        <a href="/" id="store-link">Back to store</a>
+        <button type="button" id="lang-toggle" class="language">العربية</button>
+      </div>
+    </section>
+    <p class="footnote" id="security-note">Protected access · Session expires after 6 hours</p>
+  </main>
+</body>
+</html>
