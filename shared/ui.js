@@ -65,13 +65,13 @@ export function errorMessage(err) {
 }
 
 /** Store logo with a graceful text fallback. The logo file is supplied by the owner (see shared/assets/README.md). */
-export function brandMark({ asLink = true, href = '/customer/index.html' } = {}) {
+export function brandMark({ asLink = true, href = '/customer/index.html', name = 'POWER TECH' } = {}) {
   const img = el('img', {
-    attrs: { src: CONFIG.LOGO_PATH, alt: 'POWER TECH', width: 44, height: 44, loading: 'eager', decoding: 'async' },
+    attrs: { src: CONFIG.LOGO_PATH, alt: name, width: 44, height: 44, loading: 'eager', decoding: 'async' },
     dataset: { logo: '1' },
   });
   const words = el('span', { className: 'brand-words' },
-    el('strong', {}, 'POWER TECH'),
+    el('strong', {}, name),
     el('small', { attrs: { 'data-i18n': 'app.tagline' } }, t('app.tagline')));
   const inner = [img, words];
   return asLink ? el('a', { className: 'brand', attrs: { href } }, ...inner) : el('div', { className: 'brand' }, ...inner);
