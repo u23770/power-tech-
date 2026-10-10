@@ -8,8 +8,7 @@ The admin page is designed to open after a single access code. It no longer asks
 2. In Vercel → Project → Settings → Environment Variables, set these server-side values for the same deployment environments:
    - `ADMIN_ACCESS_CODE`: a long, unique access code. Rotate it if it is shared outside the intended admins.
    - `ADMIN_SESSION_SECRET`: a separate random secret used to sign access cookies.
-   - `SUPABASE_URL`: the project's Supabase URL.
-   - `SUPABASE_ANON_KEY`: the project's public anon/publishable key.
+   - The server reads `SUPABASE_URL` and `SUPABASE_ANON_KEY` from `shared/config.js` by default; optional server-side overrides are supported.
    - `SUPABASE_SERVICE_ROLE_KEY`: the service-role key. This key must remain server-side and must never be added to `shared/config.js`, frontend code, or a public repository.
 3. Keep `shared/config.js` configured with the same Supabase URL and anon key for the browser client.
 4. Redeploy on Vercel after changing environment variables.
