@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseCsvText, serializeCsvRows, prepareProductImport } from '../admin/js/csv.js';
+import { parseCsvText, serializeCsvRows, prepareProductImport, spreadsheetRowsToCsv } from '../admin/js/csv.js';
 
 test('CSV parser preserves commas, escaped quotes and embedded newlines', () => {
   const rows = parseCsvText('title_en,description_en\r\n"Workstation, Pro","line one\nline ""two"""\r\n');
@@ -13,6 +13,17 @@ test('CSV parser preserves commas, escaped quotes and embedded newlines', () => 
 test('CSV serializer quotes delimiters, quotes and line breaks and round-trips', () => {
   const rows = [['title_en', 'description_en'], ['Workstation, Pro', 'line one\nline "two"']];
   assert.deepEqual(parseCsvText(serializeCsvRows(rows)), rows);
+});
+
+test('Excel sheet rows are converted to CSV without losing header names or escaped values', () => {
+  const rows = [
+    ['title_en', 'description_en', 'price'],
+    ['Workstation, Pro', 'Line 1\nLine "two"', 12500],
+  ];
+  assert.deepEqual(parseCsvText(spreadsheetRowsToCsv(rows)), [
+    ['title_en', 'description_en', 'price'],
+    ['Workstation, Pro', 'Line 1\nLine "two"', '12500'],
+  ]);
 });
 
 test('product import skips template examples and resolves known brand/category values', () => {
@@ -50,6 +61,18 @@ test('product import rejects duplicate SKUs and unknown categories before writes
 });
 
 import { readFile as readSource } from 'node:fs/promises';
+
+test('product import control accepts Excel formats and tells users the import steps', async () => {
+  const [view, parser] = await Promise.all([
+    readSource(new URL('../admin/js/views/products.js', import.meta.url), 'utf8'),
+    readSource(new URL('../admin/js/csv.js', import.meta.url), 'utf8'),
+  ]);
+  assert.match(view, /\.xlsx/);
+  assert.match(view, /\.xls/);
+  assert.match(view, /parseSpreadsheetFile/);
+  assert.match(parser, /xlsx@0\.18\.5/);
+  assert.match(view, /admin\.csv\.steps/);
+});
 
 test('CSV export view is manager-gated and does not export private cost data', async () => {
   const [view, apiSource] = await Promise.all([
