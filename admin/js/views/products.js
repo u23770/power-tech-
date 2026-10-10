@@ -251,7 +251,10 @@ function createCsvTools(ctx) {
         }
       }
       const message = t('admin.csv.import_result', { created, failed, stockWarnings });
-      try { sessionStorage.setItem('pt_admin_csv_flash', message); } catch {}
+      try {
+        sessionStorage.setItem('pt_admin_csv_flash', message);
+        sessionStorage.setItem('pt_admin_csv_flash_kind', failed || stockWarnings ? 'error' : 'success');
+      } catch {}
       if (failures.length) {
         setStatus(status, message, failed || stockWarnings ? 'error' : 'success');
         preview.replaceChildren(el('ul', { className: 'item-list' }, ...failures.map((failure) => el('li', {}, failure))));
@@ -268,8 +271,10 @@ function createCsvTools(ctx) {
   try {
     const flash = sessionStorage.getItem('pt_admin_csv_flash');
     if (flash) {
+      const kind = sessionStorage.getItem('pt_admin_csv_flash_kind') || 'success';
       sessionStorage.removeItem('pt_admin_csv_flash');
-      setStatus(status, flash, 'success');
+      sessionStorage.removeItem('pt_admin_csv_flash_kind');
+      setStatus(status, flash, kind);
     }
   } catch {}
   applyI18n(section);
