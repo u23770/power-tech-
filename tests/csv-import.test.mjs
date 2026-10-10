@@ -48,3 +48,17 @@ test('product import rejects duplicate SKUs and unknown categories before writes
   assert.ok(result.errors.some((e) => e.code === 'duplicate_sku'));
   assert.ok(result.errors.some((e) => e.code === 'unknown_category'));
 });
+
+import { readFile as readSource } from 'node:fs/promises';
+
+test('CSV export view is manager-gated and does not export private cost data', async () => {
+  const [view, apiSource] = await Promise.all([
+    readSource(new URL('../admin/js/views/products.js', import.meta.url), 'utf8'),
+    readSource(new URL('../admin/js/api.js', import.meta.url), 'utf8'),
+  ]);
+  assert.match(view, /ctx\.can\('manager'\) \? createCsvTools\(ctx\) : null/);
+  assert.match(view, /confirmAction\(t\('admin\.csv\.confirm_import'/);
+  const csvApi = apiSource.slice(apiSource.indexOf('export async function listProductsForCsvAdmin'));
+  assert.match(csvApi, /inventory\(quantity_on_hand,low_stock_threshold\)/);
+  assert.doesNotMatch(csvApi.split('\n\n// ----------')[0], /cost_price/);
+});
