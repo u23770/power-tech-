@@ -40,8 +40,10 @@ export async function render(main, ctx) {
   }
 
   function buildAddForm(rows) {
+    const availableKeys = Object.keys(SUPPORTED).filter((key) => !rows.some((r) => r.key === key));
+    if (!availableKeys.length) return el('section', { className: 'card' }, el('h2', {}, t('admin.settings.add')), el('p', { className: 'muted' }, t('admin.settings.all_added')));
     const select = el('select', { className: 'select', attrs: { id: 'setting-new-key', name: 'key' } },
-      ...Object.keys(SUPPORTED).map((key) => el('option', { attrs: { value: key, disabled: rows.some((r) => r.key === key) } }, t(`admin.settings.key.${key}`))));
+      ...availableKeys.map((key) => el('option', { attrs: { value: key } }, t(`admin.settings.key.${key}`))));
     const isPublic = el('input', { attrs: { type: 'checkbox', checked: 'checked', id: 'setting-new-public' } });
     const form = el('form', { className: 'card form' },
       el('h2', {}, t('admin.settings.add')),
