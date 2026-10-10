@@ -27,7 +27,7 @@ function validTicket(value, secret) {
   const split = value.split('.');
   if (split.length !== 2) return false;
   const [expiryText, signatureText] = split;
-  if (!/^\\d{10,12}$/.test(expiryText) || !/^[a-f0-9]{64}$/i.test(signatureText)) return false;
+  if (!/^\d{10,12}$/.test(expiryText) || !/^[a-f0-9]{64}$/i.test(signatureText)) return false;
   if (Number(expiryText) <= Math.floor(Date.now() / 1000)) return false;
   const expected = createHmac('sha256', secret).update(String(expiryText)).digest();
   const supplied = Buffer.from(signatureText, 'hex');
@@ -48,7 +48,7 @@ async function handle(request) {
     return json(401, { ok: false, error: 'access_required' });
   }
 
-  const supabaseUrl = (process.env.SUPABASE_URL || '').replace(/\\/$/, '');
+  const supabaseUrl = (process.env.SUPABASE_URL || '').replace(/\/$/, '');
   const anonKey = process.env.SUPABASE_ANON_KEY;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!supabaseUrl.startsWith('https://') || !anonKey || !serviceRoleKey) {
@@ -56,7 +56,7 @@ async function handle(request) {
   }
 
   const authorization = request.headers.get('authorization') || '';
-  const match = authorization.match(/^Bearer\\s+(.+)$/i);
+  const match = authorization.match(/^Bearer\s+(.+)$/i);
   if (!match) return json(401, { ok: false, error: 'session_required' });
 
   let userResponse;
