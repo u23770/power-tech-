@@ -27,6 +27,7 @@ const state = {
   currentRoute: null,
   lastPendingCount: null,
   pollTimer: null,
+  gateTimer: null,
 };
 
 /** Passed to every view. */
@@ -58,9 +59,12 @@ async function boot() {
     return;
   }
 
+  startGateMonitoring();
+
   adminSupabase.auth.onAuthStateChange(async (event) => {
     if (event === 'SIGNED_OUT') {
       stopPolling();
+      stopGateMonitoring();
       state.user = null;
       state.role = null;
       window.location.replace('/admin/access.html');
@@ -217,6 +221,27 @@ async function renderGate(message) {
 }
 
 // ---------- Alerts: new pending orders (polling fallback; no realtime dependency) ----------
+function startGateMonitoring() {
+  stopGateMonitoring();
+  state.gateTimer = setInterval(async () => {
+    try {
+      const response = await fetch('/api/admin-access', { credentials: 'same-origin', cache: 'no-store' });
+      if (response.ok) return;
+    } catch {
+      return;
+    }
+    stopPolling();
+    stopGateMonitoring();
+    await adminSupabase.auth.signOut().catch(() => {});
+    window.location.replace('/admin/access.html');
+  }, 60000);
+}
+
+function stopGateMonitoring() {
+  if (state.gateTimer) clearInterval(state.gateTimer);
+  state.gateTimer = null;
+}
+
 function startPolling() {
   stopPolling();
   if (!ctx.can('staff')) return;
