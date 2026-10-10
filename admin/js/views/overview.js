@@ -26,6 +26,7 @@ export async function render(main, ctx) {
   const from = ctx.query.get('from') || isoDate(monthAgo);
   const to = ctx.query.get('to') || isoDate(today);
 
+  const rangeMsg = el('p', { className: 'status', attrs: { role: 'alert', 'aria-live': 'polite' }, dataset: { kind: 'error' } });
   const fromIn = el('input', { className: 'input', attrs: { type: 'date', id: 'ov-from', name: 'from', value: from, required: 'required' } });
   const toIn = el('input', { className: 'input', attrs: { type: 'date', id: 'ov-to', name: 'to', value: to, required: 'required' } });
   const form = el('form', { className: 'filter-bar', attrs: { role: 'search' } },
