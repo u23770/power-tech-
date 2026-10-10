@@ -353,3 +353,33 @@ export async function listProductsForCsvAdmin() {
   }
   return rows;
 }
+
+
+// ---------- Customer directory (built from order snapshots, including guest checkouts) ----------
+export async function listCustomerOrderSnapshotsAdmin() {
+  const columns = 'user_id,customer_name,customer_phone,customer_email,status,total,currency,created_at,reference';
+  const pageSize = 1000;
+  const { count, error: countError } = await db().from('orders').select('id', { count: 'exact', head: true });
+  if (countError) throw countError;
+  const total = count ?? 0;
+  const rows = [];
+  for (let from = 0; from < total; from += pageSize) {
+    const { data, error } = await db().from('orders').select(columns)
+      .order('created_at', { ascending: false })
+      .range(from, Math.min(from + pageSize - 1, total - 1));
+    if (error) throw error;
+    rows.push(...data);
+  }
+  return rows;
+}
+
+// ---------- Stock movement history ----------
+export async function listStockMovementsAdmin({ productId = '', page = 0, pageSize = 50 } = {}) {
+  let query = db().from('stock_movements')
+    .select('id,product_id,unit_id,delta,reason,order_id,actor_id,created_at,product:products(title_en,title_ar,sku,slug)', { count: 'exact' });
+  if (productId) query = query.eq('product_id', productId);
+  const from = page * pageSize;
+  const { data, error, count } = await query.order('created_at', { ascending: false }).range(from, from + pageSize - 1);
+  if (error) throw error;
+  return { rows: data, count: count ?? 0 };
+}
