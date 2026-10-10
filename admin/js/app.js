@@ -4,6 +4,7 @@ import { isConfigured, adminSupabase } from '/shared/supabase.js';
 import { t, getLang, setLang, onLangChange, applyI18n } from '/shared/i18n.js';
 import { el, clear, brandMark, errorMessage, setStatus, setBusy, confirmAction } from '/shared/ui.js';
 import * as api from './api.js';
+import { parseAdminHash } from './router.js';
 
 const RANK = { staff: 1, manager: 2, owner: 3 };
 const ROUTES = {
@@ -168,8 +169,7 @@ function currentRouteName() {
 }
 
 function parseHash() {
-  const parts = location.hash.replace(/^#\/?/, '').split('/').filter(Boolean);
-  return { name: parts[0] || 'overview', id: parts[1] || null, query: new URLSearchParams(location.hash.split('?')[1] || '') };
+  return parseAdminHash(location.hash);
 }
 
 async function onHashChange() {
