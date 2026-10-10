@@ -26,9 +26,15 @@ function check(id, label, checked) {
 export async function render(main, ctx) {
   const msg = el('div', { className: 'status', attrs: { role: 'status', 'aria-live': 'polite', hidden: true } });
   const host = el('div', { className: 'stack' });
+  const productDiscountGuide = el('section', { className: 'card stack' },
+    el('h2', { className: 'card-title' }, t('admin.coupons.product_discounts')),
+    el('p', { className: 'muted' }, t('admin.coupons.product_discounts_help')),
+    el('a', { className: 'btn btn-ghost', attrs: { href: '#/products' } }, t('admin.coupons.open_products')),
+    el('p', { className: 'hint' }, t('admin.coupons.steps')));
   main.append(
     el('div', { className: 'page-title' }, el('h1', { className: 'card-title' }, t('admin.nav.coupons'))),
     el('p', { className: 'muted' }, t('admin.coupons.intro')),
+    productDiscountGuide,
     msg, host
   );
 
@@ -47,8 +53,9 @@ export async function render(main, ctx) {
   const sale = check('cp-sale', t('admin.coupons.applies_sale'), false);
   const saveBtn = el('button', { className: 'btn btn-dark', attrs: { type: 'submit' } }, t('admin.coupons.create'));
   const cancelBtn = el('button', { className: 'btn btn-ghost', attrs: { type: 'button', hidden: 'hidden' }, on: { click: () => clearForm() } }, t('admin.cancel'));
+  const formTitle = el('h2', {}, t('admin.coupons.form_title'));
   const form = el('form', { className: 'card form' },
-    el('h2', {}, t('admin.coupons.form_title')),
+    formTitle,
     el('div', { className: 'form-grid two' }, code.field,
       el('div', { className: 'field' }, el('label', { attrs: { for: kind.id || 'cp-kind' } }, t('admin.coupons.type')), kind),
       value.field, min.field, starts.field, ends.field, max.field, first.field, sale.field),
@@ -101,6 +108,7 @@ export async function render(main, ctx) {
     kind.value = 'percent';
     value.input.max = '100';
     saveBtn.textContent = t('admin.coupons.create');
+    formTitle.textContent = t('admin.coupons.form_title');
     cancelBtn.hidden = true;
     code.input.focus();
     applyI18n(form);
@@ -119,6 +127,7 @@ export async function render(main, ctx) {
     first.input.checked = coupon.first_order_only;
     sale.input.checked = coupon.applies_to_sale_items;
     saveBtn.textContent = t('admin.coupons.update');
+    formTitle.textContent = t('admin.coupons.edit_title');
     cancelBtn.hidden = false;
     form.scrollIntoView({ behavior: 'smooth', block: 'start' });
     code.input.focus();
