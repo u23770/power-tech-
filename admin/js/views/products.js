@@ -46,6 +46,7 @@ async function renderList(main, ctx) {
     el('div', { className: 'page-title' },
       el('h1', { className: 'card-title' }, t('admin.nav.products')),
       ctx.can('staff') ? el('a', { className: 'btn btn-gold', attrs: { href: '#/products/new' } }, t('admin.new_product')) : null),
+    el('p', { className: 'hint' }, t('admin.products.quick_start')),
     ctx.can('manager') ? createCsvTools(ctx) : null,
     form, host);
 
@@ -356,6 +357,7 @@ async function renderEditor(main, ctx, id) {
   const titleH = el('h1', { className: 'card-title', attrs: { id: 'editor-title' } }, isNew ? t('admin.new_product') : (lang === 'ar' && p.title_ar ? p.title_ar : p.title_en));
 
   const form = el('form', { className: 'card form', attrs: { novalidate: true, 'aria-labelledby': 'editor-title' } },
+    el('p', { className: 'hint' }, t('admin.product.editor_help')),
     el('div', { className: 'two-col' },
       el('fieldset', { className: 'card' },
         el('legend', { attrs: { 'data-i18n': 'admin.section.basic' } }, t('admin.section.basic')),
