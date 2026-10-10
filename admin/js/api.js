@@ -335,3 +335,21 @@ export async function saveStoreSettingAdmin(key, value, is_public = true) {
     { key, value, is_public }, { onConflict: 'key' });
   if (error) throw error;
 }
+
+
+// ---------- CSV import/export (manager-only route; no private cost fields) ----------
+export async function listProductsForCsvAdmin() {
+  const columns = 'id,slug,sku,model_number,brand_id,category_id,title_en,title_ar,description_en,description_ar,condition,price,sale_price,currency,warranty_text_en,warranty_text_ar,track_mode,status,is_featured,specs,created_at,inventory(quantity_on_hand,low_stock_threshold)';
+  const pageSize = 1000;
+  const { count, error: countError } = await db().from('products').select('id', { count: 'exact', head: true });
+  if (countError) throw countError;
+  const total = count ?? 0;
+  const rows = [];
+  for (let from = 0; from < total; from += pageSize) {
+    const { data, error } = await db().from('products').select(columns)
+      .order('created_at', { ascending: true }).range(from, Math.min(from + pageSize - 1, total - 1));
+    if (error) throw error;
+    rows.push(...data);
+  }
+  return rows;
+}
