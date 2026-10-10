@@ -1,0 +1,9 @@
+# Public storefront may be indexed. Admin and customer-account pages must not be.
+User-agent: *
+Disallow: /admin/
+Disallow: /customer/account.html
+Disallow: /customer/checkout.html
+Disallow: /customer/cart.html
+Disallow: /customer/track.html
+
+Sitemap: https://power-tech-u23770.vercel.app/sitemap.xml

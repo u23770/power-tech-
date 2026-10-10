@@ -1,0 +1,29 @@
+# Secrets and local environment: never commit
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.netrc
+.git-credentials
+
+# Dependencies and tooling output
+node_modules/
+.vercel/
+.DS_Store
+Thumbs.db
+*.log
+.idea/
+.vscode/
+
+# Supabase CLI local state
+supabase/.branches/
+supabase/.temp/
+
+# Local-only data exports (real customer or inventory data)
+data/*.local.csv
+data/exports/
+
+# Python caches
+__pycache__/
+*.pyc

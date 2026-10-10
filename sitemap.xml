@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- PLACEHOLDER: replace YOUR-DOMAIN.example with the confirmed production origin before deploying.
+     Product URLs are not listed here; generate them from published products when the domain is final (see docs/DEPLOYMENT.md). -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://power-tech-u23770.vercel.app/</loc></url>
+  <url><loc>https://power-tech-u23770.vercel.app/customer/catalog.html</loc></url>
+</urlset>

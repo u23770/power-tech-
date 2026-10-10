@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>POWER TECH · Admin</title>
+  <link rel="icon" href="/shared/assets/power-tech-logo.png">
+  <link rel="stylesheet" href="/shared/base.css">
+  <link rel="stylesheet" href="/admin/admin.css">
+  <script src="/shared/boot.js"></script>
+</head>
+<body data-page="admin">
+  <a class="skip-link" href="#admin-main" data-i18n="nav.skip">Skip to content</a>
+  <header class="admin-header">
+    <div class="container admin-header-inner">
+      <div id="admin-brand"></div>
+      <div class="admin-header-actions">
+        <span id="admin-who" class="muted admin-who"></span>
+        <button id="admin-lang" class="btn btn-ghost btn-small" type="button"></button>
+        <button id="admin-signout" class="btn btn-ghost btn-small" type="button" hidden data-i18n="admin.sign_out">Sign out</button>
+      </div>
+    </div>
+  </header>
+  <nav class="admin-nav" aria-label="Admin sections" hidden id="admin-nav">
+    <div class="container">
+      <ul class="admin-tabs" id="admin-tabs"></ul>
+    </div>
+  </nav>
+  <div class="container" id="alert-bar" role="status" aria-live="polite"></div>
+  <main id="admin-main" class="container" tabindex="-1">
+    <p class="muted" data-i18n="admin.checking">Checking access…</p>
+  </main>
+  <script type="module" src="/admin/js/app.js"></script>
+</body>
+</html>

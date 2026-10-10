@@ -1,0 +1,49 @@
+/* admin/admin.css — staff dashboard. Shares tokens and components with shared/base.css. */
+body { background: #f2f2f0; }
+.admin-header { background: var(--ink); color: var(--silver-soft); border-bottom: 2px solid #3a3322; }
+.admin-header-inner { display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: center; justify-content: space-between; padding-block: .6rem; }
+.admin-header-actions { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.admin-header .brand img { width: 36px; height: 36px; }
+.admin-header .brand-words strong { font-size: .95rem; }
+.admin-header .btn-ghost { color: var(--silver-soft); border-color: #4a4f5a; background: transparent; }
+.admin-header .btn-ghost:hover { background: rgb(255 255 255 / .06); }
+.admin-who { color: var(--silver) !important; max-width: 16rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.admin-nav { background: var(--white); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 10; }
+.admin-tabs { list-style: none; margin: 0; padding: 0; display: flex; gap: .25rem; overflow-x: auto; }
+.admin-tabs a { display: inline-flex; align-items: center; min-height: 44px; padding: .4rem .85rem; color: var(--text); text-decoration: none; font-weight: 600; border-bottom: 3px solid transparent; white-space: nowrap; }
+.admin-tabs a[aria-current="page"] { border-color: var(--gold); color: var(--text); }
+.admin-tabs a:hover { color: var(--gold); }
+main#admin-main { padding-block: 1.25rem 3rem; min-height: 70vh; }
+main#admin-main:focus { outline: none; }
+#alert-bar:empty { display: none; }
+.alert-banner { margin-block: .75rem 0; display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; justify-content: space-between; background: #fff6dd; border: 1px solid #ecd58b; color: var(--warn); padding: .6rem .9rem; border-radius: var(--radius-sm); }
+
+.page-title { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .5rem 1rem; margin-bottom: 1rem; }
+.kpi-grid { display: grid; gap: .75rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (min-width: 900px) { .kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.filter-bar { display: flex; flex-wrap: wrap; gap: .6rem; align-items: flex-end; margin-bottom: 1rem; }
+.filter-bar .field { min-width: 0; flex: 1 1 180px; }
+.two-col { display: grid; gap: 1rem; }
+@media (min-width: 960px) { .two-col { grid-template-columns: 1.5fr 1fr; align-items: start; } }
+.login-card { max-width: 420px; margin: 3rem auto; }
+.toolbar-admin { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; justify-content: space-between; margin-bottom: .75rem; }
+.pager { display: flex; gap: .5rem; align-items: center; justify-content: center; margin-top: .75rem; }
+.num { font-variant-numeric: tabular-nums; text-align: end; white-space: nowrap; }
+.item-list li { margin-bottom: .35rem; }
+.form-actions { position: sticky; bottom: 0; background: rgb(242 242 240 / .96); padding: .75rem 0; border-top: 1px solid var(--line); display: flex; gap: .5rem; flex-wrap: wrap; z-index: 5; }
+.card-title { font-size: 1.05rem; margin: 0 0 .5rem; }
+.img-grid { display: grid; gap: .6rem; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+.img-grid .card { padding: .5rem; display: grid; gap: .4rem; }
+.img-grid img { aspect-ratio: 1; object-fit: contain; width: 100%; background: #fff; }
+.code { font-family: ui-monospace, Menlo, Consolas, monospace; direction: ltr; unicode-bidi: isolate; }
+.money { font-variant-numeric: tabular-nums; }
+.table-actions { display: flex; flex-wrap: wrap; gap: .4rem; }
+
+@media (max-width: 640px) {
+  .admin-who { display: none; }
+  .table-wrap table thead { display: none; }
+  .table-wrap table, .table-wrap tbody, .table-wrap tr, .table-wrap td { display: block; width: 100%; }
+  .table-wrap tr { border-bottom: 1px solid var(--line); padding: .5rem .75rem; }
+  .table-wrap td { border: 0; padding: .2rem 0; }
+  .table-wrap td[data-label]::before { content: attr(data-label) ": "; color: var(--muted); font-size: .85rem; }
+}
