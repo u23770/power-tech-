@@ -21,6 +21,14 @@ export const supabase = supabaseClientFactory
     })
   : null;
 
+// Admin sessions are deliberately memory-only: the server-side access-code cookie
+// is the gate, so an admin JWT must not survive a reload or be refreshed indefinitely.
+export const adminSupabase = supabaseClientFactory
+  ? supabaseClientFactory(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY, {
+      auth: { persistSession: false, autoRefreshToken: true, detectSessionInUrl: false },
+    })
+  : null;
+
 /** Throws a stable error code when the project is not configured yet. */
 export function requireClient() {
   if (!supabase) {
@@ -29,4 +37,14 @@ export function requireClient() {
     throw err;
   }
   return supabase;
+}
+
+/** Admin-only client; its short-lived anonymous session is never persisted. */
+export function requireAdminClient() {
+  if (!adminSupabase) {
+    const err = new Error('not_configured');
+    err.code = 'not_configured';
+    throw err;
+  }
+  return adminSupabase;
 }

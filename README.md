@@ -30,7 +30,7 @@ power-tech/
 │   ├── checkout.html  account.html  track.html
 │   ├── customer.css
 │   └── js/                      api, layout, cards, page scripts, cart-lines
-├── admin/                       staff dashboard (noindex)
+├── admin/                       code-gated admin dashboard (noindex)
 │   ├── index.html  admin.css
 │   └── js/                      app (auth, routing), api, views/*
 ├── supabase/
@@ -48,7 +48,7 @@ power-tech/
 1. Create a Supabase project. Apply `supabase/migrations/0001` to `0004` in order. → [DEPLOYMENT.md](docs/DEPLOYMENT.md)
 2. Create the `product-images` storage bucket and configure Auth. → [DEPLOYMENT.md](docs/DEPLOYMENT.md)
 3. Put your Supabase URL, anon key, and domain in `shared/config.js`. Add the logo at `shared/assets/power-tech-logo.png`.
-4. Create the owner account, then grant the role in SQL. → [DEPLOYMENT.md](docs/DEPLOYMENT.md)
+4. Configure the code-only admin flow and server-side secrets. → [Admin access-code setup](docs/ADMIN-ACCESS-CODE.md)
 5. Review [STORE-SETUP.md](docs/STORE-SETUP.md). Checkout stays off until you enable it.
 6. Deploy to Vercel as a static project with no build step.
 7. Work through [QA-CHECKLIST.md](docs/QA-CHECKLIST.md) on a staging project first.

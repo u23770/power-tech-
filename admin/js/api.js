@@ -1,8 +1,8 @@
 // admin/js/api.js — staff data access. Every call is authorized by RLS and/or trusted RPCs on the server.
 // The client-side role checks in app.js only control what the UI shows; they are NOT the security boundary.
-import { requireClient } from '/shared/supabase.js';
+import { requireAdminClient } from '/shared/supabase.js';
 
-const db = () => requireClient();
+const db = () => requireAdminClient();
 
 // ---------- Session and role ----------
 export async function getCurrentUser() {
