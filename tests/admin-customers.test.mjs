@@ -16,7 +16,7 @@ test('customer directory is routed for authorized staff, not public users', () =
 test('customer API calls a bounded staff-only database directory RPC', () => {
   assert.match(api, /export async function listCustomersAdmin\([\s\S]*?rpc\('admin_customer_directory'/);
   assert.match(api, /const safePageSize = Math\.min\(Math\.max\(Number\(pageSize\) \|\| 25, 1\), 100\)/);
-  assert.match(api, /p_page_size:\\s*safePageSize/);
+  assert.match(api, /p_page_size:\s*safePageSize/);
 });
 
 test('directory query excludes anonymous auth sessions and store staff', () => {
