@@ -41,7 +41,8 @@ export async function render(main, ctx) {
     const name = inputField('new-cat-en', t('admin.catalog.name_en'), '', { required: 'required', minlength: '2', maxlength: '120' });
     const nameAr = inputField('new-cat-ar', t('admin.catalog.name_ar'), '', { maxlength: '120' });
     const slug = inputField('new-cat-slug', t('admin.catalog.slug'), '', { required: 'required', minlength: '2', maxlength: '80', pattern: '[a-z0-9-]{2,80}' });
-    const order = inputField('new-cat-order', t('admin.catalog.sort_order'), String((categories.reduce((m, c) => Math.max(m, c.sort_order || 0), -1) + 1) * 10), { type: 'number', step: '1', required: 'required' });
+    const nextOrder = categories.length ? Math.max(...categories.map((c) => Number(c.sort_order) || 0)) + 10 : 0;
+    const order = inputField('new-cat-order', t('admin.catalog.sort_order'), String(nextOrder), { type: 'number', step: '1', required: 'required' });
     name.input.addEventListener('input', () => {
       if (!slug.input.dataset.touched) slug.input.value = slugFromName(name.input.value);
     });
