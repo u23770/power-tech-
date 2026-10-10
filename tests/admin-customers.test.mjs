@@ -40,6 +40,7 @@ test('customer directory labels are localized in Arabic and English', () => {
   for (const key of [
     'admin.nav.customers',
     'admin.customers.title',
+    'admin.customers.name',
     'admin.customers.search',
     'admin.customers.kind',
     'admin.customers.all',
