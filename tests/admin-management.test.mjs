@@ -43,7 +43,7 @@ test('new admin labels have Arabic and English translations', () => {
     'admin.catalog.categories', 'admin.coupons.created',
     'admin.settings.invalid_json', 'admin.settings.all_added',
   ]) {
-    assert.ok(i18n.includes(`'${key}':`), `missing translation: ${key}`);
-    assert.ok(i18n.includes(`'${key}':`), `Arabic or English dictionary missing: ${key}`);
+    const occurrences = i18n.split(`'${key}':`).length - 1;
+    assert.ok(occurrences >= 2, `expected both Arabic and English translations for: ${key}`);
   }
 });
