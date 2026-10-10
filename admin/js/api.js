@@ -291,10 +291,21 @@ export async function deleteBrandAdmin(id) {
 // ---------- Coupons ----------
 export async function listCouponsAdmin() {
   const { data, error } = await db().from('coupons')
-    .select('id,code,kind,value,min_subtotal,starts_at,ends_at,max_redemptions,redemptions_count,first_order_only,applies_to_sale_items,is_active,created_at,updated_at')
-    .order('created_at', { ascending: false });
+    .select('id,name,promotion_type,scope,target_product_id,target_category_id,code,kind,value,min_subtotal,max_discount,starts_at,ends_at,max_redemptions,redemptions_count,max_uses_per_customer,priority,first_order_only,applies_to_sale_items,is_active,created_at,updated_at')
+    .order('priority', { ascending: false }).order('created_at', { ascending: false });
   if (error) throw error;
   return data;
+}
+
+/** Targets for product/category-scoped promotions. Manager access is enforced by RLS. */
+export async function listPromotionTargetsAdmin() {
+  const [{ data: products, error: productError }, { data: categories, error: categoryError }] = await Promise.all([
+    db().from('products').select('id,title_en,title_ar,model_number,sku,status').order('title_en').limit(1000),
+    db().from('categories').select('id,name_en,name_ar,is_active').order('sort_order').limit(500),
+  ]);
+  if (productError) throw productError;
+  if (categoryError) throw categoryError;
+  return { products, categories };
 }
 
 export async function insertCouponAdmin(row) {
