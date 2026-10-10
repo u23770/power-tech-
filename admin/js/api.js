@@ -337,6 +337,26 @@ export async function saveStoreSettingAdmin(key, value, is_public = true) {
 }
 
 
+// ---------- Customer directory (aggregates registered accounts and guest checkouts) ----------
+export async function listCustomersAdmin({ q = '', kind = 'all', page = 0, pageSize = 25 } = {}) {
+  const cleanQuery = String(q || '').trim().slice(0, 100);
+  const customerKind = ['all', 'registered', 'guest'].includes(kind) ? kind : 'all';
+  const safePage = Math.min(Math.max(Math.floor(Number(page) || 0), 0), 100000);
+  const safePageSize = Math.min(Math.max(Number(pageSize) || 25, 1), 100);
+  const { data, error } = await db().rpc('admin_customer_directory', {
+    p_q: cleanQuery,
+    p_kind: customerKind,
+    p_page: safePage,
+    p_page_size: safePageSize,
+  });
+  if (error) throw error;
+  return {
+    rows: Array.isArray(data?.rows) ? data.rows : [],
+    count: Number(data?.count) || 0,
+  };
+}
+
+
 // ---------- CSV import/export (manager-only route; no private cost fields) ----------
 export async function listProductsForCsvAdmin() {
   const columns = 'id,slug,sku,model_number,brand_id,category_id,title_en,title_ar,description_en,description_ar,condition,price,sale_price,currency,warranty_text_en,warranty_text_ar,track_mode,status,is_featured,specs,created_at,inventory(quantity_on_hand,low_stock_threshold)';
