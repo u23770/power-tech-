@@ -329,6 +329,9 @@ const EXTRA_EN = {
   'admin.settings.key.contact': 'Store contact details',
   'err.category_in_use': 'This category is assigned to products. Move those products to another category before deleting it.',
   'err.brand_in_use': 'This brand is assigned to products. Change those products before deleting the brand.',
+  'err.coupon_login_required': 'Sign in to use this offer because it has a per-customer usage limit.',
+  'err.coupon_user_limit': 'You have reached this offer’s usage limit.',
+  'err.coupon_not_applicable': 'This discount does not apply to any eligible items in your order.',
   'err.coupon_in_use': 'This coupon has redemption history and cannot be deleted.',
   'err.invalid_brand_name': 'Brand name must contain between 1 and 80 characters.',
 
@@ -698,6 +701,9 @@ const EXTRA_AR = {
   'admin.settings.key.contact': 'بيانات التواصل مع المتجر',
   'err.category_in_use': 'هذا التصنيف مرتبط بمنتجات. انقل المنتجات لتصنيف آخر قبل حذفه.',
   'err.brand_in_use': 'هذه العلامة مرتبطة بمنتجات. غيّر العلامة للمنتجات قبل حذفها.',
+  'err.coupon_login_required': 'سجّل الدخول لاستخدام هذا العرض لأنه محدود بعدد مرات لكل عميل.',
+  'err.coupon_user_limit': 'لقد وصلت إلى الحد الأقصى لاستخدام هذا العرض.',
+  'err.coupon_not_applicable': 'هذا الخصم لا ينطبق على أي منتج مؤهل في طلبك.',
   'err.coupon_in_use': 'لهذا الكوبون سجل استخدام ولا يمكن حذفه.',
   'err.invalid_brand_name': 'اسم العلامة التجارية يجب أن يتراوح بين حرف و80 حرفًا.',
 
