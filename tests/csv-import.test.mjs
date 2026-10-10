@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseCsvText, serializeCsvRows, prepareProductImport, spreadsheetRowsToCsv, normalizeProductImportRows } from '../admin/js/csv.js';
+import { parseCsvText, serializeCsvRows, prepareProductImport, spreadsheetRowsToCsv, normalizeProductImportRows, parseSpreadsheetFile } from '../admin/js/csv.js';
 
 test('CSV parser preserves commas, escaped quotes and embedded newlines', () => {
   const rows = parseCsvText('title_en,description_en\r\n"Workstation, Pro","line one\nline ""two"""\r\n');
@@ -13,6 +13,16 @@ test('CSV parser preserves commas, escaped quotes and embedded newlines', () => 
 test('CSV serializer quotes delimiters, quotes and line breaks and round-trips', () => {
   const rows = [['title_en', 'description_en'], ['Workstation, Pro', 'line one\nline "two"']];
   assert.deepEqual(parseCsvText(serializeCsvRows(rows)), rows);
+});
+
+test('Excel extensions reach the spreadsheet parser instead of being rejected as unsupported', async () => {
+  for (const name of ['products.xlsx', 'products.xls']) {
+    await assert.rejects(
+      parseSpreadsheetFile({ name, size: 10, arrayBuffer: async () => new ArrayBuffer(0) }),
+      (error) => error.message === 'spreadsheet_parser_unavailable',
+      `${name} should pass extension validation before parser loading`,
+    );
+  }
 });
 
 test('Excel sheet rows are converted to CSV without losing header names or escaped values', () => {
