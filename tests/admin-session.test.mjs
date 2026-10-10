@@ -64,7 +64,7 @@ test('grants owner role only to a verified anonymous Supabase user', async () =>
   assert.equal(response.status, 200);
   assert.deepEqual(await response.json(), { ok: true, role: 'owner' });
   assert.equal(calls.length, 2);
-  assert.match(calls[1].url, /staff_roles\\?on_conflict=user_id$/);
+  assert.match(calls[1].url, /staff_roles\?on_conflict=user_id$/);
   assert.equal(calls[1].options.headers.Authorization, 'Bearer test-service-role-key');
   assert.deepEqual(JSON.parse(calls[1].options.body), { user_id: 'anon-user-id', role: 'owner' });
 });
