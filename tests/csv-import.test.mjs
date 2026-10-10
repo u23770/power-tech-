@@ -40,7 +40,7 @@ test('product import resolves human-readable category names and creates a safe s
   const result = prepareProductImport([
     'اسم المنتج,السعر,التصنيف',
     'لابتوب تجريبي,12000,لابتوبات',
-  ].join('\\n'), {
+  ].join('\n'), {
     categories: [{ id: 'cat-1', slug: 'laptops', name_en: 'Laptops', name_ar: 'لابتوبات' }],
     brands: [],
     existingProducts: [],
